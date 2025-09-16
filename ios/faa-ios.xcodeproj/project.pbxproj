@@ -6,14 +6,27 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		73A0B4802E79DD2500712C7F /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 73A0B47F2E79DD2500712C7F /* FirebaseAuth */; };
+		73A0B4822E79DD2500712C7F /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 73A0B4812E79DD2500712C7F /* FirebaseCore */; };
+		73A0B4852E79DD8C00712C7F /* FacebookLogin in Frameworks */ = {isa = PBXBuildFile; productRef = 73A0B4842E79DD8C00712C7F /* FacebookLogin */; };
+		73A0B4872E79DDB300712C7F /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 73A0B4862E79DDB200712C7F /* .gitignore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		73A0B3FC2E79D52300712C7F /* faa-ios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "faa-ios.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		73A0B4862E79DDB200712C7F /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		73A0B3FE2E79D52300712C7F /* faa-ios */ = {
+		73A0B4142E79D64000712C7F /* Sources */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "faa-ios";
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		73A0B4192E79D66500712C7F /* Resources */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Resources;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -23,6 +36,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				73A0B4822E79DD2500712C7F /* FirebaseCore in Frameworks */,
+				73A0B4802E79DD2500712C7F /* FirebaseAuth in Frameworks */,
+				73A0B4852E79DD8C00712C7F /* FacebookLogin in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -32,7 +48,9 @@
 		73A0B3F32E79D52300712C7F = {
 			isa = PBXGroup;
 			children = (
-				73A0B3FE2E79D52300712C7F /* faa-ios */,
+				73A0B4862E79DDB200712C7F /* .gitignore */,
+				73A0B4192E79D66500712C7F /* Resources */,
+				73A0B4142E79D64000712C7F /* Sources */,
 				73A0B3FD2E79D52300712C7F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -61,10 +79,14 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				73A0B3FE2E79D52300712C7F /* faa-ios */,
+				73A0B4142E79D64000712C7F /* Sources */,
+				73A0B4192E79D66500712C7F /* Resources */,
 			);
 			name = "faa-ios";
 			packageProductDependencies = (
+				73A0B47F2E79DD2500712C7F /* FirebaseAuth */,
+				73A0B4812E79DD2500712C7F /* FirebaseCore */,
+				73A0B4842E79DD8C00712C7F /* FacebookLogin */,
 			);
 			productName = "faa-ios";
 			productReference = 73A0B3FC2E79D52300712C7F /* faa-ios.app */;
@@ -94,6 +116,10 @@
 			);
 			mainGroup = 73A0B3F32E79D52300712C7F;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				73A0B47E2E79DD2500712C7F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				73A0B4832E79DD8C00712C7F /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 73A0B3FD2E79D52300712C7F /* Products */;
 			projectDirPath = "";
@@ -109,6 +135,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				73A0B4872E79DDB300712C7F /* .gitignore in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -332,6 +359,43 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		73A0B47E2E79DD2500712C7F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.3.0;
+			};
+		};
+		73A0B4832E79DD8C00712C7F /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/facebook/facebook-ios-sdk.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 14.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		73A0B47F2E79DD2500712C7F /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 73A0B47E2E79DD2500712C7F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		73A0B4812E79DD2500712C7F /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 73A0B47E2E79DD2500712C7F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		73A0B4842E79DD8C00712C7F /* FacebookLogin */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 73A0B4832E79DD8C00712C7F /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */;
+			productName = FacebookLogin;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 73A0B3F42E79D52300712C7F /* Project object */;
 }
