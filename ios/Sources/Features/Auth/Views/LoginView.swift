@@ -1,7 +1,9 @@
 import SwiftUI
+import AuthenticationServices
 
 struct LoginView: View {
-    @StateObject private var viewModel = LoginViewModel()
+    @StateObject private var viewModel = LoginViewModel(authService: AppleSignInService())
+    @State private var facebookViewModel = LoginViewModel(authService: FacebookSignInService())
     
     var body: some View {
         NavigationStack {
@@ -9,65 +11,26 @@ struct LoginView: View {
                 Text("Đăng nhập vào \(Constants.appName)")
                     .font(.title)
                 
-                TextField("Email", text: $viewModel.email)
-                    .textFieldStyle(.roundedBorder)
-                    .padding(.horizontal)
-                
-                SecureField("Mật khẩu", text: $viewModel.password)
-                    .textFieldStyle(.roundedBorder)
-                    .padding(.horizontal)
-                
-                if let error = viewModel.errorMessage {
+                if let error = viewModel.errorMessage ?? facebookViewModel.errorMessage {
                     Text(error)
                         .foregroundColor(.red)
                         .font(.caption)
                 }
                 
-                Button(action: {
-                    Task {
-                        await viewModel.login()
-                    }
-                }) {
-                    Text("Đăng nhập")
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                }
-                .padding(.horizontal)
-                
-                // Social Login Buttons
                 HStack(spacing: 10) {
-                    Button(action: {
-                        Task {
-                            await viewModel.loginWithSocial(provider: "Apple")
-                        }
-                    }) {
-                        Text("Apple")
-                            .frame(width: 100)
-                            .padding()
-                            .background(Color.black)
-                            .foregroundColor(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                    }
+                    SignInWithAppleButton(
+                        .signIn,
+                        onRequest: { request in
+                            request.requestedScopes = [.fullName, .email]
+                        },
+                        onCompletion: { _ in }
+                    )
+                    .frame(width: 100, height: 44)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
                     
                     Button(action: {
                         Task {
-                            await viewModel.loginWithSocial(provider: "Google")
-                        }
-                    }) {
-                        Text("Google")
-                            .frame(width: 100)
-                            .padding()
-                            .background(Color.red)
-                            .foregroundColor(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                    }
-                    
-                    Button(action: {
-                        Task {
-                            await viewModel.loginWithSocial(provider: "Facebook")
+                            await facebookViewModel.loginWithSocial(provider: "Facebook")
                         }
                     }) {
                         Text("Facebook")
@@ -79,10 +42,11 @@ struct LoginView: View {
                     }
                 }
                 
-                
-                // Điều hướng khi đăng nhập thành công
                 .navigationDestination(isPresented: $viewModel.isLoggedIn) {
-                    Text("Chào mừng!") // Thay bằng HomeView sau
+                    Text("Chào mừng!")
+                }
+                .navigationDestination(isPresented: $facebookViewModel.isLoggedIn) {
+                    Text("Chào mừng!")
                 }
             }
             .padding()

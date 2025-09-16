@@ -1,8 +1,18 @@
 import SwiftUI
 
 struct ContentView: View {
+    @AppStorage("hasSeenIntro") private var hasSeenIntro: Bool = false
+    
     var body: some View {
-        LoginView()
+        Group {
+            if hasSeenIntro {
+                LoginView()
+            } else {
+                IntroView()
+                    .onAppear {
+                    }
+            }
+        }
     }
 }
 

@@ -1,5 +1,5 @@
 import Foundation
 
 struct Constants {
-    static let appName = "FaaApp"
+    static let appName = "Finy"
 }
