@@ -1,9 +1,11 @@
+import Combine
+
 class IntroViewModel: ObservableObject {
     @Published var currentPage: Int = 0
     
-    // Sample data for onboarding screens
     let screens: [(title: String, description: String)] = [
-        ("Welcome to the App", "Discover amazing features and start your journey with us!"),
-        ("Get Started", "Swipe to explore and dive into the experience!")
+        ("Effortless, Real-Time Chats", "With lightning-speed response times, it processes queries in real-time, offering clear and concise answers without delays."),
+        ("AI Assistant", "Your personal AI assistant, here to simplify your life. Whether you need help managing budget, AI is ready to assist you anytime, anywhere."),
+        ("Login the Finny!", "Login to your account to see your progress and routes.")
     ]
 }

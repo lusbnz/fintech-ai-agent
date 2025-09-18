@@ -5,13 +5,7 @@ struct ContentView: View {
     
     var body: some View {
         Group {
-            if hasSeenIntro {
-                LoginView()
-            } else {
-                IntroView()
-                    .onAppear {
-                    }
-            }
+            IntroView()
         }
     }
 }
