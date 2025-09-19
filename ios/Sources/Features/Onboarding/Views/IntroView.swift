@@ -25,11 +25,23 @@ struct IntroView: View {
                 ForEach(0..<viewModel.screens.count, id: \.self) { index in
                     Group {
                         if index == 0 {
-                            FirstSlideView(title: viewModel.screens[index].title, description: viewModel.screens[index].description)
+                            FirstSlideView(
+                                title: viewModel.screens[index].title,
+                                description: viewModel.screens[index].description,
+                                viewModel: viewModel
+                            )
                         } else if index == 1 {
-                            SecondSlideView(title: viewModel.screens[index].title, description: viewModel.screens[index].description)
+                            SecondSlideView(
+                                title: viewModel.screens[index].title,
+                                description: viewModel.screens[index].description,
+                                viewModel: viewModel
+                            )
                         } else if index == 2 {
-                            ThirdSlideView(title: viewModel.screens[index].title, description: viewModel.screens[index].description)
+                            ThirdSlideView(
+                                title: viewModel.screens[index].title,
+                                description: viewModel.screens[index].description,
+                                viewModel: viewModel
+                            )
                         }
                         
                     }

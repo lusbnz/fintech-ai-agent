@@ -3,6 +3,7 @@ import SwiftUI
 struct FirstSlideView: View {
     let title: String
     let description: String
+    @ObservedObject var viewModel: IntroViewModel
     
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {

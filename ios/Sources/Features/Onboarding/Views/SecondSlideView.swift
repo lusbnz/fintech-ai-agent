@@ -3,10 +3,11 @@ import SwiftUI
 struct SecondSlideView: View {
     let title: String
     let description: String
+    @ObservedObject var viewModel: IntroViewModel
     
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Image("intro4")
+            Image("intro5")
                 .resizable()
                 .scaledToFill()
                 .frame(maxWidth: .infinity, maxHeight: 400)
@@ -77,7 +78,11 @@ struct SecondSlideView: View {
             Spacer()
 
             Button(action: {
-                print("Button tapped")
+                if viewModel.currentPage < viewModel.screens.count - 1 {
+                    withAnimation {
+                        viewModel.currentPage += 1
+                    }
+                }
             }) {
                 ZStack(alignment: .leading) {
                     Text("Get started now")
@@ -110,7 +115,6 @@ struct SecondSlideView: View {
                 .frame(maxWidth: .infinity, alignment: .topLeading)
             }
             .padding(.horizontal)
-            .padding(.bottom, 40)
             .padding(.top, 100)
         }
     }

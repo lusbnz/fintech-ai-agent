@@ -3,10 +3,11 @@ import SwiftUI
 struct ThirdSlideView: View {
     let title: String
     let description: String
+    @ObservedObject var viewModel: IntroViewModel
     
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Image("intro4")
+            Image("intro5")
                 .resizable()
                 .scaledToFill()
                 .frame(maxWidth: .infinity, maxHeight: 400)
@@ -97,11 +98,11 @@ struct ThirdSlideView: View {
                 }) {
                     Image(systemName: "g.circle.fill")
                         .font(.system(size: 20))
-                        .foregroundColor(.white)
+                        .foregroundColor(.orange)
                         .frame(width: 80, height: 48)
                         .background(
                             RoundedRectangle(cornerRadius: 32)
-                                .fill(Color.orange)
+                                .fill(Color.white)
                         )
                 }
                 
