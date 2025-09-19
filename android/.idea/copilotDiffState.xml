@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CopilotDiffPersistence">
+    <option name="pendingDiffs">
+      <map>
+        <entry key="$PROJECT_DIR$/app/src/main/java/com/ltcn272/finy/data/source/remote/user/api/UserApi.kt">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/app/src/main/java/com/ltcn272/finy/data/source/remote/user/api/UserApi.kt" />
+              <option name="updatedContent" value="package com.ltcn272.finy.data.source.remote.user.api&#10;&#10;import com.ltcn272.finy.data.source.remote.user.dto.UserProfileDto&#10;import retrofit2.Response&#10;import retrofit2.http.GET&#10;import retrofit2.http.PUT&#10;import retrofit2.http.Body&#10;&#10;interface UserApi {&#10;    @GET(&quot;user/profile&quot;)&#10;    suspend fun getProfile(): Response&lt;UserProfileDto&gt;&#10;&#10;    @PUT(&quot;user/profile&quot;)&#10;    suspend fun updateProfile(@Body body: UserProfileDto): Response&lt;UserProfileDto&gt;&#10;}&#10;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>
