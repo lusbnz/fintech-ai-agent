@@ -1,4 +1,4 @@
-package com.ltcn272.finny.ui.feature.auth
+package com.ltcn272.finny.ui.feature.intro_auth.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -26,7 +26,7 @@ class AuthViewModel @Inject constructor(
 
     fun loginWithGoogle(idToken: String) {
         viewModelScope.launch {
-            _authState.value = AuthUiState.Loading
+            _authState.value = AuthUiState.Loading(AuthProvider.GOOGLE)
             when (val firebase = authUseCases.signInWithGoogle(idToken)) {
                 is AppResult.Success -> {
                     handleBackendLogin(firebase.data)
@@ -39,7 +39,7 @@ class AuthViewModel @Inject constructor(
 
     fun loginWithFacebook(accessToken: String) {
         viewModelScope.launch {
-            _authState.value = AuthUiState.Loading
+            _authState.value = AuthUiState.Loading(AuthProvider.FACEBOOK)
             when (val firebase = authUseCases.signInWithFacebook(accessToken)) {
                 is AppResult.Success -> {
                     handleBackendLogin(firebase.data)
@@ -66,11 +66,9 @@ class AuthViewModel @Inject constructor(
                 }
             }
             is AppResult.Error -> {
-                _authState.value = AuthUiState.Error("Cannot get Firebase ID token: ${idToken.message}")
+                _authState.value =
+                    AuthUiState.Error("Cannot get Firebase ID token: ${idToken.message}")
             }
         }
     }
 }
-
-
-

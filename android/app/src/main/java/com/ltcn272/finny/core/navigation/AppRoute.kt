@@ -5,9 +5,8 @@ import androidx.navigation.NavHostController
 
 sealed class AppRoute(val route: String) {
     // Auth
-    data object Intro : AppRoute("intro")
     data object Auth : AppRoute("auth")
-    data object Setup : AppRoute("setup")
+    data object IntroAuth : AppRoute("intro_auth")
     // Main
     data object Dashboard : AppRoute("dashboard")
     data object Timeline : AppRoute("timeline")

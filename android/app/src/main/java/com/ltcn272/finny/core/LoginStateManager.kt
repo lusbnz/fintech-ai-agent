@@ -5,18 +5,15 @@ import androidx.core.content.edit
 import javax.inject.Inject
 
 class LoginStateManager @Inject constructor(private val sp: SharedPreferences) {
-    private val K_ACCESS = "access_token"
-    private val K_FINISHED_SETUP = "finished_setup"
+
+    companion object {
+        const val K_ACCESS = "access_token"
+    }
+
 
     fun isLoggedIn(clockSkewSec: Long = 60): Boolean {
         val token = sp.getString(K_ACCESS, null) ?: return false
         return !isJwtExpired(token, clockSkewSec)
-    }
-
-    fun isFinishedSetup(): Boolean = sp.getBoolean(K_FINISHED_SETUP, false)
-
-    fun setFinishedSetup(done: Boolean) {
-        sp.edit { putBoolean(K_FINISHED_SETUP, done) }
     }
 
     fun clear() {

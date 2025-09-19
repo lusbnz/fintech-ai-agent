@@ -1,7 +1,6 @@
 package com.ltcn272.finny.di
 
 import android.content.SharedPreferences
-import com.ltcn272.finny.core.IntroStateManager
 import com.ltcn272.finny.core.LoginStateManager
 import com.ltcn272.finny.core.TokenManager
 import dagger.Module
@@ -21,10 +20,6 @@ object StorageModule {
     @Provides
     @Singleton
     fun provideTokenManager(sp: SharedPreferences) = TokenManager(sp)
-
-    @Provides
-    @Singleton
-    fun provideIntroStateManager(sp: SharedPreferences) = IntroStateManager(sp)
 
     @Provides
     @Singleton

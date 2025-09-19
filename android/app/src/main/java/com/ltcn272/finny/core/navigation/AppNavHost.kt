@@ -12,7 +12,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.NavType
-import com.ltcn272.finny.ui.feature.setup.SetupScreen
 import com.ltcn272.finny.ui.feature.dashboard.DashboardScreen
 import com.ltcn272.finny.ui.feature.timeline.TimelineScreen
 import com.ltcn272.finny.ui.feature.transaction.TransactionDetailScreen
@@ -24,8 +23,7 @@ import com.ltcn272.finny.ui.feature.settings.SettingsScreen
 import com.ltcn272.finny.ui.feature.upsell.UpsellScreen
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
-import com.ltcn272.finny.ui.feature.auth.AuthScreen
-import com.ltcn272.finny.ui.feature.intro.IntroScreen
+import com.ltcn272.finny.ui.feature.intro_auth.IntroAuthScreen
 import com.facebook.CallbackManager
 
 @Composable
@@ -34,21 +32,16 @@ fun AppNavHost(
     callbackManager: CallbackManager
 ) {
     val managers = hiltViewModel<ManagerProviderViewModel>()
-    val introStateManager = managers.introStateManager
     val loginStateManager = managers.loginStateManager
 
     var startDestination: String? by remember { mutableStateOf(null) }
 
     LaunchedEffect(Unit) {
-        val seenIntro = introStateManager.hasSeenIntro()
         val loggedIn = loginStateManager.isLoggedIn()
-        val finishedSetup = loginStateManager.isFinishedSetup()
-
-        startDestination = when {
-            !seenIntro -> AppRoute.Intro.route
-            !loggedIn -> AppRoute.Auth.route
-            loggedIn && !finishedSetup -> AppRoute.Setup.route
-            else -> AppRoute.Dashboard.route
+        startDestination = if (!loggedIn) {
+            AppRoute.IntroAuth.route
+        } else {
+            AppRoute.Dashboard.route
         }
     }
 
@@ -57,45 +50,17 @@ fun AppNavHost(
         navController = navController,
         startDestination = start
     ) {
-
-        composable(AppRoute.Intro.route) {
-            IntroScreen(
-                onGetStarted = {
-                    introStateManager.setSeenIntro(true)
-                    navController.navigate(AppRoute.Auth.route) {
-                        popUpTo(0)
-                        launchSingleTop = true
-                    }
-                }
-            )
-        }
-
-        composable(AppRoute.Auth.route) {
-            AuthScreen(
-                onLoggedIn = {
-                    val next = if (!loginStateManager.isFinishedSetup())
-                        AppRoute.Setup.route else AppRoute.Dashboard.route
-                    navController.navigate(next) {
+        composable(AppRoute.IntroAuth.route) {
+            IntroAuthScreen(
+                onDone = {
+                    navController.navigate(AppRoute.Dashboard.route) {
                         popUpTo(0)
                         launchSingleTop = true
                     }
                 },
                 callbackManager = callbackManager
             )
-
         }
-        composable(AppRoute.Setup.route) {
-            SetupScreen(onDone = {
-                loginStateManager.setFinishedSetup(true)
-                navController.navigate(AppRoute.Dashboard.route) {
-                    popUpTo(0)
-                    launchSingleTop = true
-                }
-            })
-        }
-
-
-
         composable(AppRoute.Dashboard.route) {
             DashboardScreen(
                 onOpenTxn = { id ->
@@ -146,8 +111,5 @@ fun AppNavHost(
             )
         }
         composable(AppRoute.Upsell.route) { UpsellScreen() }
-
-
     }
-
 }

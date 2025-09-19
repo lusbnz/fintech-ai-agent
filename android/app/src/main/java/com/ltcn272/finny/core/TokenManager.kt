@@ -5,9 +5,12 @@ import androidx.core.content.edit
 import javax.inject.Inject
 
 class TokenManager @Inject constructor(private val sp: SharedPreferences) {
-    private val K_ACCESS = "access_token"
-    private val K_REFRESH = "refresh_token"
-    private val K_FIREBASE_ID_TOKEN = "firebase_id_token"
+
+    companion object {
+        const val K_ACCESS = "access_token"
+        const val K_REFRESH = "refresh_token"
+        const val K_FIREBASE_ID_TOKEN = "firebase_id_token"
+    }
 
     fun saveAccessToken(token: String) = sp.edit { putString(K_ACCESS, token) }
     fun saveRefreshToken(token: String) = sp.edit { putString(K_REFRESH, token) }

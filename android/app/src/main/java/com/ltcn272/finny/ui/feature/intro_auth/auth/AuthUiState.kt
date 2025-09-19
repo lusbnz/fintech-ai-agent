@@ -1,11 +1,15 @@
-package com.ltcn272.finny.ui.feature.auth
+package com.ltcn272.finny.ui.feature.intro_auth.auth
 
 import com.ltcn272.finny.domain.model.AuthUser
 import com.ltcn272.finny.domain.model.BackendSession
 
+enum class AuthProvider {
+    NONE, GOOGLE, FACEBOOK, APPLE
+}
+
 sealed class AuthUiState {
     data object Idle : AuthUiState()
-    data object Loading : AuthUiState()
+    data class Loading(val provider: AuthProvider) : AuthUiState()
     data class Authorized(
         val firebaseUser: AuthUser?,
         val session: BackendSession
