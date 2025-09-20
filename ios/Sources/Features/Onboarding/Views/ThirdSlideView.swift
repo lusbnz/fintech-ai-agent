@@ -1,13 +1,15 @@
 import SwiftUI
+import GoogleSignInSwift
 
 struct ThirdSlideView: View {
     let title: String
     let description: String
     @ObservedObject var viewModel: IntroViewModel
+    @StateObject private var authVM = AuthViewModel()
     
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Image("intro5")
+            Image("intro4")
                 .resizable()
                 .scaledToFill()
                 .frame(maxWidth: .infinity, maxHeight: 400)
@@ -79,44 +81,32 @@ struct ThirdSlideView: View {
 
             HStack(spacing: 12) {
                 Spacer()
-                
+                  
                 Button(action: {
-                    print("Apple Login tapped")
+                    Task {
+                        do {
+                            try await authVM.signinGoogle()
+                        } catch {
+                            print("Google Sign-in error:", error.localizedDescription)
+                        }
+                    }
                 }) {
-                    Image(systemName: "apple.logo")
-                        .font(.system(size: 20))
-                        .foregroundColor(.white)
-                        .frame(width: 80, height: 48)
-                        .background(
-                            RoundedRectangle(cornerRadius: 32)
-                                .fill(Color.black)
-                        )
-                }
-                
-                Button(action: {
-                    print("Google Login tapped")
-                }) {
-                    Image(systemName: "g.circle.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(.orange)
-                        .frame(width: 80, height: 48)
-                        .background(
-                            RoundedRectangle(cornerRadius: 32)
-                                .fill(Color.white)
-                        )
-                }
-                
-                Button(action: {
-                    print("Facebook Login tapped")
-                }) {
-                    Image(systemName: "f.circle.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(.white)
-                        .frame(width: 80, height: 48)
-                        .background(
-                            RoundedRectangle(cornerRadius: 32)
-                                .fill(Color.blue)
-                        )
+                    HStack {
+                        Image("google-logo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 20, height: 20)
+                    
+                        Text("Signin with Google")
+                            .font(.system(size: 14))
+                            .fontWeight(.medium)
+                            .foregroundColor(.black)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 48)
+                    .background(
+                        RoundedRectangle(cornerRadius: 32)
+                            .fill(Color.white)
+                    )
                 }
                 
                 Spacer()

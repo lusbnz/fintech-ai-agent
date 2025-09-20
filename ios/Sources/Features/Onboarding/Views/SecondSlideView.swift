@@ -7,7 +7,7 @@ struct SecondSlideView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Image("intro5")
+            Image("intro4")
                 .resizable()
                 .scaledToFill()
                 .frame(maxWidth: .infinity, maxHeight: 400)

@@ -11,13 +11,11 @@
 		738783E02E7DC4F4002B34EF /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 738783DF2E7DC4F4002B34EF /* GoogleSignInSwift */; };
 		73A0B4802E79DD2500712C7F /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 73A0B47F2E79DD2500712C7F /* FirebaseAuth */; };
 		73A0B4822E79DD2500712C7F /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 73A0B4812E79DD2500712C7F /* FirebaseCore */; };
-		73A0B4852E79DD8C00712C7F /* FacebookLogin in Frameworks */ = {isa = PBXBuildFile; productRef = 73A0B4842E79DD8C00712C7F /* FacebookLogin */; };
-		73A0B4872E79DDB300712C7F /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 73A0B4862E79DDB200712C7F /* .gitignore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		738784022E7E5495002B34EF /* faa-ios-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "faa-ios-Info.plist"; sourceTree = "<group>"; };
 		73A0B3FC2E79D52300712C7F /* faa-ios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "faa-ios.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		73A0B4862E79DDB200712C7F /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -42,7 +40,6 @@
 				73A0B4822E79DD2500712C7F /* FirebaseCore in Frameworks */,
 				738783DE2E7DC4F4002B34EF /* GoogleSignIn in Frameworks */,
 				73A0B4802E79DD2500712C7F /* FirebaseAuth in Frameworks */,
-				73A0B4852E79DD8C00712C7F /* FacebookLogin in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -52,7 +49,7 @@
 		73A0B3F32E79D52300712C7F = {
 			isa = PBXGroup;
 			children = (
-				73A0B4862E79DDB200712C7F /* .gitignore */,
+				738784022E7E5495002B34EF /* faa-ios-Info.plist */,
 				73A0B4192E79D66500712C7F /* Resources */,
 				73A0B4142E79D64000712C7F /* Sources */,
 				73A0B3FD2E79D52300712C7F /* Products */,
@@ -90,7 +87,6 @@
 			packageProductDependencies = (
 				73A0B47F2E79DD2500712C7F /* FirebaseAuth */,
 				73A0B4812E79DD2500712C7F /* FirebaseCore */,
-				73A0B4842E79DD8C00712C7F /* FacebookLogin */,
 				738783DD2E7DC4F4002B34EF /* GoogleSignIn */,
 				738783DF2E7DC4F4002B34EF /* GoogleSignInSwift */,
 			);
@@ -124,7 +120,6 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				73A0B47E2E79DD2500712C7F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
-				73A0B4832E79DD8C00712C7F /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */,
 				738783DC2E7DC4F4002B34EF /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -142,7 +137,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				73A0B4872E79DDB300712C7F /* .gitignore in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -290,6 +284,7 @@
 				DEVELOPMENT_TEAM = ZPN8CCXJ8W;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "faa-ios-Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -322,6 +317,7 @@
 				DEVELOPMENT_TEAM = ZPN8CCXJ8W;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "faa-ios-Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -384,14 +380,6 @@
 				minimumVersion = 12.3.0;
 			};
 		};
-		73A0B4832E79DD8C00712C7F /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/facebook/facebook-ios-sdk.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 14.1.0;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -414,11 +402,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 73A0B47E2E79DD2500712C7F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseCore;
-		};
-		73A0B4842E79DD8C00712C7F /* FacebookLogin */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 73A0B4832E79DD8C00712C7F /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */;
-			productName = FacebookLogin;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
