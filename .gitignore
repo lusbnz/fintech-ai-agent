@@ -1,0 +1,45 @@
+# Android
+*.iml
+.gradle/
+local.properties
+/.idea/caches/
+/.idea/libraries/
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+android/build/
+android/.externalNativeBuild/
+android/.cxx/
+
+# iOS
+*.DS_Store
+ios/build/
+ios/DerivedData/
+ios/*.xcuserstate
+ios/*.xcscmblueprint
+ios/*.xcworkspace/xcuserdata/
+ios/*.xcodeproj/xcuserdata/
+ios/.build/
+ios/Packages/
+ios/Package.pins
+ios/Package.resolved
+ios/Pods/
+ios/*.lock
+ios/Carthage/Build/
+ios/GoogleService-Info.plist
+ios/*.xcarchive
+
+# Fastlane (liên quan đến CI/CD)
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output/
+
+# macOS
+.DS_Store
+
+# File tạm và swap (chung)
+*.moved-aside
+*.swp
+*.swo

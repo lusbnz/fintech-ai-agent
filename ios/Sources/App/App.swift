@@ -1,12 +1,18 @@
 import SwiftUI
+import Firebase
 
 @main
 struct YourApp: App {
-  var body: some Scene {
-    WindowGroup {
-      NavigationView {
-        ContentView()
-      }
+    init() {
+        FirebaseApp.configure()
+        print("Firebase configured!")
     }
-  }
+  
+    var body: some Scene {
+        WindowGroup {
+          NavigationView {
+            ContentView()
+          }
+        }
+    }
 }
