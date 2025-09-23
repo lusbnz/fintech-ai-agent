@@ -61,7 +61,7 @@ struct SecondSlideView: View {
             Spacer()
             
             Text(title)
-                .font(.system(size: 36))
+                .font(.system(size: 32))
                 .fontWeight(.bold)
                 .foregroundColor(.black)
                 .multilineTextAlignment(.leading)

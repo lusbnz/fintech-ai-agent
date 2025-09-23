@@ -8,7 +8,7 @@ struct FirstSlideView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(title)
-                .font(.system(size: 36))
+                .font(.system(size: 32))
                 .fontWeight(.bold)
                 .foregroundColor(.black)
                 .multilineTextAlignment(.leading)

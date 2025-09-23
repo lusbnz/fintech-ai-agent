@@ -1,7 +1,9 @@
-//
-//  UserProfile.swift
-//  faa-ios
-//
-//  Created by Đinh Quốc Việt on 23/9/25.
-//
+struct UserProfile: Decodable {
+    let _id: String
+    let display_name: String
+    let email: String
+    let avatar: String?
+    let plan: String
+    let is_active: Bool
+}
 

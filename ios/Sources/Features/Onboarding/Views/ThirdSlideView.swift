@@ -63,7 +63,7 @@ struct ThirdSlideView: View {
             Spacer()
             
             Text(title)
-                .font(.system(size: 36))
+                .font(.system(size: 32))
                 .fontWeight(.bold)
                 .foregroundColor(.black)
                 .multilineTextAlignment(.leading)
@@ -84,11 +84,7 @@ struct ThirdSlideView: View {
                   
                 Button(action: {
                     Task {
-                        do {
-                            try await authVM.signinGoogle()
-                        } catch {
-                            print("Google Sign-in error:", error.localizedDescription)
-                        }
+                        await authVM.signinGoogle()
                     }
                 }) {
                     HStack {

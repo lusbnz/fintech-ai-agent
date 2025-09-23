@@ -1,15 +1,16 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var authVM = AuthViewModel()
+    
     var body: some View {
         Group {
-            IntroView()
+            if authVM.isLoggedIn {
+                HomeView()
+            } else {
+                IntroView()
+                    .environmentObject(authVM)
+            }
         }
-    }
-}
-
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
     }
 }
