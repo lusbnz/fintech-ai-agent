@@ -1,16 +1,15 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var authVM = AuthViewModel()
-    
+    @EnvironmentObject var authViewModel: AuthViewModel
+
     var body: some View {
-        Group {
-            if authVM.isLoggedIn {
-                HomeView()
-            } else {
-                IntroView()
-                    .environmentObject(authVM)
-            }
+        if authViewModel.isLoggedIn, authViewModel.userProfile != nil {
+            WrapperView()
+                .environmentObject(authViewModel)
+        } else if !authViewModel.isLoading {
+            IntroView()
+                .environmentObject(authViewModel)
         }
     }
 }

@@ -26,7 +26,7 @@ final class AuthService {
     }
 
     func getProfile() async throws -> UserProfile {
-        let profile: [String: UserProfile] = try await APIClient.shared.request(.profile, as: [String: UserProfile].self)
-        return profile["data"]!
+        let response: ProfileResponse = try await APIClient.shared.request(.profile, as: ProfileResponse.self)
+        return response.data
     }
 }

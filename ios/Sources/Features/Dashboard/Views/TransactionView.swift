@@ -11,7 +11,7 @@ struct TransactionView: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
-            .opacity(0.3)
+            .opacity(0.5)
             .ignoresSafeArea()
             
             ScrollView{

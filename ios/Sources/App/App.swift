@@ -8,11 +8,13 @@ import GoogleSignIn
 @main
 struct FinyApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var Delegate
+    @StateObject private var authViewModel = AuthViewModel()
   
     var body: some Scene {
         WindowGroup {
           NavigationView {
             ContentView()
+                  .environmentObject(authViewModel)
           }
         }
     }

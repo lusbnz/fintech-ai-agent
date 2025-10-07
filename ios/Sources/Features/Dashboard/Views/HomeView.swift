@@ -17,17 +17,45 @@ struct HomeView: View {
             .ignoresSafeArea()
 
             ScrollView {
-                HStack {
-                    Text("Hi, \(authViewModel.userProfile?.display_name ?? "Guest")!")
-                       .font(.system(size: 24, weight: .semibold))
+                VStack{
+                    HStack {
+                        Text("Hi, \(authViewModel.userProfile?.display_name ?? "Guest")!")
+                            .font(.system(size: 24, weight: .semibold))
+                        
+                        Spacer()
+                        
+                        HStack(spacing: 12) {
+                            Button(action: {
+                                // action Plan
+                            }) {
+                                Text("Subcription")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                    .background(Color.black.opacity(0.7))
+                                    .foregroundColor(.white)
+                                    .clipShape(Capsule())
+                                    .shadow(radius: 2)
+                            }
+                            
+                            NavigationLink {
+                                SettingView(authViewModel: authViewModel)
+                            } label: {
+                                Image(systemName: "gearshape")
+                                    .font(.system(size: 16))
+                                    .foregroundColor(.black)
+                                    .padding(6)
+                                    .background(Color.white)
+                                    .clipShape(Circle())
+                                    .shadow(radius: 2)
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
                     
-                    Spacer()
-                    
-                    HStack(spacing: 12) {
-                        Button(action: {
-                            // action Plan
-                        }) {
-                            Text("Plan")
+                    HStack {
+                        NavigationLink(destination: BudgetView().environmentObject(authViewModel)) {
+                            Text("Budget")
                                 .font(.system(size: 12, weight: .semibold))
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
@@ -36,21 +64,11 @@ struct HomeView: View {
                                 .clipShape(Capsule())
                                 .shadow(radius: 2)
                         }
-                        
-                        NavigationLink {
-                           SettingView(authViewModel: authViewModel)
-                       } label: {
-                           Image(systemName: "gearshape")
-                               .font(.system(size: 16))
-                               .foregroundColor(.black)
-                               .padding(6)
-                               .background(Color.white)
-                               .clipShape(Circle())
-                               .shadow(radius: 2)
-                       }
+                        .padding(.horizontal)
+                        Spacer()
                     }
+                    .padding(.vertical)
                 }
-                .padding(.horizontal)
             }
         }
         .task {
