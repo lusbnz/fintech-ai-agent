@@ -19,6 +19,21 @@ struct BudgetView: View {
             .ignoresSafeArea()
             
             VStack(spacing: 16) {
+                HStack {
+                   Button(action: { dismiss() }) {
+                       Image(systemName: "chevron.left")
+                           .font(.system(size: 16, weight: .semibold))
+                           .foregroundColor(.gray)
+                   }
+                   Spacer()
+                   Text("Your Budget")
+                       .font(.system(size: 16, weight: .semibold))
+                   Spacer()
+                   Spacer().frame(width: 16)
+               }
+               .padding(.horizontal)
+               .padding(.top, 8)
+                
                 Button(action: {
                     showCreateNew = true
                 }) {
@@ -49,18 +64,11 @@ struct BudgetView: View {
                 Spacer()
             }
         }
-        .navigationTitle("Your budget")
         .navigationBarBackButtonHidden(true)
-        .navigationBarItems(leading: Button(action: {
-            dismiss()
-        }) {
-            HStack(spacing: 2) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 12))
+        .fullScreenCover(isPresented: $showCreateNew) {
+            NavigationStack {
+                CreateBudgetView()
             }
-        })
-        .sheet(isPresented: $showCreateNew) {
-            CreateBudgetView()
         }
     }
 }

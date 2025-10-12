@@ -31,25 +31,34 @@ struct QRCodeScannerView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIViewController {
         let viewController = UIViewController()
         let session = AVCaptureSession()
-        guard let videoCaptureDevice = AVCaptureDevice.default(for: .video) else { return viewController }
 
-        guard let videoInput = try? AVCaptureDeviceInput(device: videoCaptureDevice) else { return viewController }
-        if session.canAddInput(videoInput) {
-            session.addInput(videoInput)
+        guard let videoCaptureDevice = AVCaptureDevice.default(for: .video),
+              let videoInput = try? AVCaptureDeviceInput(device: videoCaptureDevice),
+              session.canAddInput(videoInput) else {
+            return viewController
         }
+
+        session.addInput(videoInput)
 
         let metadataOutput = AVCaptureMetadataOutput()
         if session.canAddOutput(metadataOutput) {
             session.addOutput(metadataOutput)
-            metadataOutput.setMetadataObjectsDelegate(context.coordinator, queue: DispatchQueue.main)
+            metadataOutput.setMetadataObjectsDelegate(context.coordinator, queue: .main)
             metadataOutput.metadataObjectTypes = [.qr]
         }
 
         let previewLayer = AVCaptureVideoPreviewLayer(session: session)
-        previewLayer.frame = UIScreen.main.bounds
         previewLayer.videoGravity = .resizeAspectFill
-        viewController.view.layer.addSublayer(previewLayer)
 
+        DispatchQueue.main.async {
+            if let screen = viewController.view.window?.windowScene?.screen {
+                previewLayer.frame = screen.bounds
+            } else {
+                previewLayer.frame = viewController.view.bounds
+            }
+        }
+
+        viewController.view.layer.addSublayer(previewLayer)
         session.startRunning()
 
         return viewController

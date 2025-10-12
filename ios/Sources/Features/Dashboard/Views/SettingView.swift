@@ -5,7 +5,28 @@ struct SettingView: View {
     @Environment(\.dismiss) var dismiss
     @State private var showSubscriptionSheet = false
     
+    @State private var selectedCurrency = "VNĐ"
+    @State private var selectedLanguage = "Vietnamese"
+    
+    let currencies = ["VNĐ", "USD", "EUR"]
+    let languages = ["Vietnamese", "English", "Japanese"]
+    
     var body: some View {
+        HStack {
+           Button(action: { dismiss() }) {
+               Image(systemName: "chevron.left")
+                   .font(.system(size: 16, weight: .semibold))
+                   .foregroundColor(.gray)
+           }
+           Spacer()
+           Text("Setting")
+               .font(.system(size: 16, weight: .semibold))
+           Spacer()
+           Spacer().frame(width: 16)
+       }
+       .padding(.horizontal)
+       .padding(.top, 8)
+        
         Form {
             VStack(spacing: 8) {
                 Text("Get Finny Premium")
@@ -20,7 +41,7 @@ struct SettingView: View {
                     showSubscriptionSheet = true
                 }) {
                     VStack(spacing: 4) {
-                        Text("Subscribe")
+                        Text("Subscription")
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(.white)
                         
@@ -42,31 +63,35 @@ struct SettingView: View {
                     // Profile detail screen
                 }
                 
-                HStack {
-                    Text("Currency")
-                    Spacer()
-                    Text("VNĐ")
-                        .foregroundColor(.secondary)
+                Picker("Currency", selection: $selectedCurrency) {
+                    ForEach(currencies, id: \.self) { currency in
+                        Text(currency).tag(currency)
+                    }
                 }
                 
-                HStack {
-                    Text("Language")
-                    Spacer()
-                    Text("Vietnamese")
-                        .foregroundColor(.secondary)
+                Picker("Language", selection: $selectedLanguage) {
+                    ForEach(languages, id: \.self) { language in
+                        Text(language).tag(language)
+                    }
                 }
             }
             
             Section {
-                HStack {
-                    Text("Planning")
-                    Spacer()
-                    Text("Pro")
-                        .foregroundColor(.secondary)
+                Button {
+                    showSubscriptionSheet = true
+                } label: {
+                    HStack {
+                        Text("Planning")
+                        Spacer()
+                        Text("Pro")
+                            .foregroundColor(.secondary)
+                    }
                 }
+                
                 NavigationLink("Ask for Feature") {
                     // Feature request screen
                 }
+                
                 NavigationLink("Review the App") {
                     // App Store Review
                 }
@@ -81,37 +106,9 @@ struct SettingView: View {
                 }
             }
         }
-        .navigationTitle("Setting")
         .navigationBarBackButtonHidden(true)
-        .navigationBarItems(leading: Button(action: {
-            dismiss()
-        }) {
-            HStack(spacing: 2) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 12))
-            }
-        })
         .sheet(isPresented: $showSubscriptionSheet) {
             SubscriptionSheet()
-        }
-    }
-}
-
-struct SubscriptionSheet: View {
-    @Environment(\.dismiss) var dismiss
-    
-    var body: some View {
-        NavigationView {
-            VStack(spacing: 16) {
-                Text("Choose Your Plan")
-                    .font(.title2)
-                    .fontWeight(.bold)
-            }
-            .padding()
-            .navigationTitle("Subscription")
-            .navigationBarItems(trailing: Button("Close") {
-                dismiss()
-            })
         }
     }
 }
