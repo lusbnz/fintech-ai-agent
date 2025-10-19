@@ -63,7 +63,6 @@ struct ChatHistoryView: View {
             .frame(maxHeight: .infinity)
             .background(Color(UIColor.systemGray6))
             .ignoresSafeArea(edges: .vertical)
-            .shadow(radius: 10)
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
     }

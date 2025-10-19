@@ -14,20 +14,16 @@ struct SuggestionItem: Hashable {
 
 struct ChatView: View {
     @Environment(\.dismiss) var dismiss
-    @State private var messages: [ChatMessage] = [
-        ChatMessage(text: "Hi, are you looking for something else?", isUser: false, time: "2:13 pm"),
-        ChatMessage(text: "Tôi vừa làm bát bún chả 30 nghìn", isUser: true, time: "2:16 pm"),
-        ChatMessage(text: "I just recorded your transaction under the category Food, subcategory Breakfast for 30,000 VND.", isUser: false, time: "2:16 pm")
-    ]
-    
+    @State private var messages: [ChatMessage] = []
     @State private var inputText: String = ""
     @State private var showInsight: Bool = false
     @State private var showHistory = false
     @Namespace private var transitionNamespace
-    
+
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
+                // ===== HEADER =====
                 HStack {
                     Button(action: { dismiss() }) {
                         Image(systemName: "chevron.left")
@@ -35,17 +31,28 @@ struct ChatView: View {
                             .foregroundColor(.black)
                             .padding(8)
                     }
+
                     Spacer()
                     Spacer()
-                    
-                    Text("AI Assistant")
-                        .font(.system(size: 16, weight: .semibold))
-                    
+
+                    VStack(spacing: 2) {
+                        Text("AI Assistant")
+                            .font(.system(size: 16, weight: .semibold))
+                        Text("4/9998")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.gray)
+                    }
+
                     Spacer()
-                    
-                    Text("4/9998")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.gray)
+
+                    // ➕ Nút tạo chat mới
+                    Button(action: createNewChat) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.black)
+                            .padding(8)
+                    }
+
                     Button(action: {
                         withAnimation(.spring()) {
                             showHistory.toggle()
@@ -59,34 +66,46 @@ struct ChatView: View {
                 }
                 .padding(.horizontal)
                 .padding(.vertical, 8)
-                
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 12) {
-                            ForEach(messages) { message in
-                                ChatBubble(message: message)
-                            }
-                            
-                            if showInsight {
-                                InsightCard()
-                                    .padding(.top, 8)
-                                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: showInsight)
-                            }
-                        }
-                        .padding(.horizontal)
-                        .padding(.top, 8)
-                        .padding(.bottom, 60)
-                        .id("Bottom")
+
+                if messages.isEmpty {
+                    VStack(spacing: 8) {
+                        Text("Meet Your Budget Coach")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(.primary)
+
+                        Text("Locally AI now supports on-device large language model, the same model that powers intelligence.")
+                            .font(.system(size: 14))
+                            .foregroundColor(.gray)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 40)
                     }
-                    .onChange(of: messages.count) {
-                        withAnimation {
-                            proxy.scrollTo("Bottom", anchor: .bottom)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 12) {
+                                ForEach(messages) { message in
+                                    ChatBubble(message: message)
+                                }
+
+                                if showInsight {
+
+                                }
+                            }
+                            .padding(.horizontal)
+                            .padding(.top, 8)
+                            .padding(.bottom, 60)
+                            .id("Bottom")
+                        }
+                        .onChange(of: messages.count) {
+                            withAnimation {
+                                proxy.scrollTo("Bottom", anchor: .bottom)
+                            }
                         }
                     }
                 }
-                
-                if !showInsight {
+
+                if !showInsight && !messages.isEmpty {
                     FlexibleView(
                         data: [
                             SuggestionItem(title: "Create new Cate", subtitle: "Cate dành cho quần áo"),
@@ -104,7 +123,7 @@ struct ChatView: View {
                     .transition(.opacity.combined(with: .move(edge: .bottom)))
                     .animation(.easeInOut(duration: 0.3), value: showInsight)
                 }
-                
+
                 ZStack {
                     if showInsight {
                         HStack(spacing: 12) {
@@ -131,32 +150,27 @@ struct ChatView: View {
                         .padding(.bottom, 40)
                         .matchedGeometryEffect(id: "inputArea", in: transitionNamespace)
                     } else {
-                        HStack(spacing: 12) {
-                            Image(systemName: "mic.fill")
-                                .font(.system(size: 16))
-                                .foregroundColor(.gray)
-                            
-                            TextField("Type here ...", text: $inputText)
-                                .textFieldStyle(PlainTextFieldStyle())
-                                .font(.system(size: 15))
-                                .foregroundColor(.primary)
-                                .padding(.vertical, 8)
-                            
+                        HStack(spacing: 8) {
+                            HStack {
+                                TextField("Ask anything", text: $inputText)
+                                    .font(.system(size: 16))
+                                    .foregroundColor(.primary)
+                                    .padding(.vertical, 12)
+                                    .padding(.horizontal, 16)
+                                    .onSubmit { sendMessage() }
+                            }
+                            .background(Color.white)
+                            .clipShape(Capsule())
+                            .shadow(color: Color.black.opacity(0.05), radius: 1, x: 0, y: 1)
+
                             Button(action: sendMessage) {
-                                Image(systemName: "arrow.up.right")
-                                    .font(.system(size: 14, weight: .bold))
+                                Image(systemName: "mic.fill")
+                                    .font(.system(size: 18, weight: .medium))
                                     .foregroundColor(.white)
-                                    .frame(width: 32, height: 32)
+                                    .frame(width: 42, height: 42)
                                     .background(Circle().fill(Color.black))
                             }
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
-                        .background(
-                            RoundedRectangle(cornerRadius: 32)
-                                .fill(Color.white)
-                                .shadow(color: Color.black.opacity(0.06), radius: 4, x: 0, y: 1)
-                        )
                         .padding(.horizontal)
                         .padding(.bottom, 8)
                         .matchedGeometryEffect(id: "inputArea", in: transitionNamespace)
@@ -167,28 +181,28 @@ struct ChatView: View {
             .background(Color(.systemGray6))
             .ignoresSafeArea(.keyboard, edges: .bottom)
             .navigationBarHidden(true)
-            
-            if showHistory {
-               Color.black.opacity(0.25)
-                   .ignoresSafeArea()
-                   .onTapGesture {
-                       withAnimation(.spring()) {
-                           showHistory = false
-                       }
-                   }
 
-               ChatHistoryView()
-                   .transition(.move(edge: .trailing))
-           }
+            if showHistory {
+                Color.black.opacity(0.25)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        withAnimation(.spring()) {
+                            showHistory = false
+                        }
+                    }
+
+                ChatHistoryView()
+                    .transition(.move(edge: .trailing))
+            }
         }
     }
-    
+
     func sendMessage() {
         guard !inputText.isEmpty else { return }
         let newMsg = ChatMessage(text: inputText, isUser: true, time: "2:17 pm")
         messages.append(newMsg)
         inputText = ""
-        
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
             messages.append(ChatMessage(
                 text: "I just recorded your transaction under the category Food, subcategory Breakfast for 30,000 VND.",
@@ -200,8 +214,15 @@ struct ChatView: View {
             }
         }
     }
-}
 
+    func createNewChat() {
+        withAnimation(.spring()) {
+            messages.removeAll()
+            inputText = ""
+            showInsight = false
+        }
+    }
+}
 
 struct ChatBubble: View {
     let message: ChatMessage
@@ -243,33 +264,5 @@ struct SuggestionButton: View {
         .padding(.horizontal, 12)
         .background(Color.gray.opacity(0.15))
         .cornerRadius(16)
-    }
-}
-
-struct InsightCard: View {
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Ăn bún chả")
-                    .font(.system(size: 14))
-                    .foregroundColor(.primary)
-                Text("30,000 VNĐ")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(Color(hex: "A35C00"))
-            }
-            Spacer()
-            ZStack {
-                Circle()
-                    .stroke(Color.gray.opacity(0.2), lineWidth: 8)
-                Circle()
-                    .trim(from: 0, to: 0.7)
-                    .stroke(Color.blue, lineWidth: 8)
-                    .rotationEffect(.degrees(-90))
-            }
-            .frame(width: 46, height: 46)
-        }
-        .padding()
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
-        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
     }
 }

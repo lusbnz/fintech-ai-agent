@@ -6,6 +6,8 @@ struct TransactionView: View {
     @State private var showCreateNew = false
     @State private var currentWeekOffset = 0
     @State private var selectedBudget: String = "All"
+    @State private var showWeekPicker = false
+    @State private var selectedDate = Date()
     
     let budgets = ["All", "Shopping", "Saving", "Food", "Transport"]
 
@@ -25,6 +27,22 @@ struct TransactionView: View {
             return "\(startText) - \(endText)"
         }
         return "Current Week"
+    }
+    
+    private func updateWeekOffset(from date: Date) {
+        let calendar = Calendar.current
+        let today = Date()
+
+        if let weekOfYearToday = calendar.dateComponents([.weekOfYear, .yearForWeekOfYear], from: today).weekOfYear,
+           let weekOfYearSelected = calendar.dateComponents([.weekOfYear, .yearForWeekOfYear], from: date).weekOfYear,
+           let yearToday = calendar.dateComponents([.yearForWeekOfYear], from: today).yearForWeekOfYear,
+           let yearSelected = calendar.dateComponents([.yearForWeekOfYear], from: date).yearForWeekOfYear {
+
+            let totalWeeksDiff = (yearSelected - yearToday) * 52 + (weekOfYearSelected - weekOfYearToday)
+            withAnimation {
+                currentWeekOffset = totalWeeksDiff
+            }
+        }
     }
 
     var groupedTransactions: [String: [Transaction]] = [
@@ -83,10 +101,50 @@ struct TransactionView: View {
                     
                     Spacer()
                     
-                    Text(currentWeekText)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.black)
-                        .animation(.easeInOut, value: currentWeekOffset)
+                    Button {
+                        showWeekPicker = true
+                    } label: {
+                        Text(currentWeekText)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.black)
+                            .animation(.easeInOut, value: currentWeekOffset)
+                    }
+                    .sheet(isPresented: $showWeekPicker) {
+                        VStack(spacing: 16) {
+                            Text("Select a Week")
+                                .font(.system(size: 18, weight: .semibold))
+                                .padding(.top)
+
+                            DatePicker(
+                                "Select Date",
+                                selection: $selectedDate,
+                                displayedComponents: .date
+                            )
+                            .datePickerStyle(.graphical)
+                            .padding()
+
+                            Button(action: {
+                                updateWeekOffset(from: selectedDate)
+                                showWeekPicker = false
+                            }) {
+                                Text("Confirm")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Color.blue)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(12)
+                                    .padding(.horizontal)
+                            }
+
+                            Button("Cancel") {
+                                showWeekPicker = false
+                            }
+                            .foregroundColor(.red)
+                            .padding(.bottom)
+                        }
+                        .presentationDetents([.medium])
+                    }
                     
                     Spacer()
                     

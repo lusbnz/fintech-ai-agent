@@ -65,9 +65,9 @@ struct WrapperView: View {
                                     .shadow(radius: 8)
                             )
                     }
-                    Spacer()
                 }
-                .padding(.bottom, 35)
+                .padding(.bottom, 60)
+                .padding(.trailing, 30)
             }
         }
         .fullScreenCover(isPresented: $showChatView) {

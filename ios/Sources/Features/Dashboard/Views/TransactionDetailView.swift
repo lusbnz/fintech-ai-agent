@@ -12,8 +12,12 @@ struct TransactionDetailView: View {
                 HStack {
                     Button(action: { dismiss() }) {
                         Image(systemName: "chevron.left")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.gray)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.black)
+                            .padding(10)
+                            .background(Color.white)
+                            .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
                     }
                     Spacer()
                     Menu {
@@ -21,10 +25,12 @@ struct TransactionDetailView: View {
                         Button("Delete", systemImage: "trash", role: .destructive) { }
                     } label: {
                         Image(systemName: "ellipsis")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.gray)
-                            .rotationEffect(.degrees(90))
-                            .padding(8)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.black)
+                            .padding(10)
+                            .background(Color.white)
+                            .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
                     }
                 }
                 .padding(.horizontal)

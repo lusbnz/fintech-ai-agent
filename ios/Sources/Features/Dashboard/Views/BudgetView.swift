@@ -9,7 +9,7 @@ struct BudgetView: View {
         ZStack {
             LinearGradient(
                 gradient: Gradient(colors: [
-                    Color(hex: "CFDBF8"),
+                    Color(hex: "F04A25"),
                     Color(hex: "FFFFFF")
                 ]),
                 startPoint: .top,
@@ -22,9 +22,14 @@ struct BudgetView: View {
                 HStack {
                    Button(action: { dismiss() }) {
                        Image(systemName: "chevron.left")
-                           .font(.system(size: 16, weight: .semibold))
-                           .foregroundColor(.gray)
+                           .font(.system(size: 14, weight: .semibold))
+                           .foregroundColor(.black)
+                           .padding(10)
+                           .background(Color.white)
+                           .clipShape(Circle())
+                           .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
                    }
+                    
                    Spacer()
                    Text("Your Budget")
                        .font(.system(size: 16, weight: .semibold))
@@ -56,8 +61,16 @@ struct BudgetView: View {
                 .padding(.horizontal)
                 
                 VStack(spacing: 8) {
-                    BudgetItem(title: "Shopping", remain: "$600")
-                    BudgetItem(title: "Dating", remain: "$230")
+                    NavigationLink(
+                        destination: BudgetDetailView(title: "Shopping", remain: "$600")
+                    ) {
+                        BudgetItem(title: "Shopping", remain: "$600")
+                    }
+                    NavigationLink(
+                        destination: BudgetDetailView(title: "Dating", remain: "$230")
+                    ) {
+                        BudgetItem(title: "Dating", remain: "$230")
+                    }
                 }
                 .padding(.horizontal)
                 
@@ -82,6 +95,7 @@ struct BudgetItem: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(size: 16))
+                    .foregroundColor(.black)
                 Text("Remain: \(remain)")
                     .font(.system(size: 12))
                     .foregroundColor(.secondary)

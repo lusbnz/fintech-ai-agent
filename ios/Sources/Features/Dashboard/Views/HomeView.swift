@@ -6,6 +6,9 @@ struct HomeView: View {
     @State private var showQRScanner = false
     @State private var scannedCode: String?
     
+    @State private var selectedBudget: String = "All"
+    let budgets = ["All", "Income", "Outgoing"]
+    
     var groupedTransactions: [String: [Transaction]] = [
         "Today": [
             Transaction(
@@ -53,8 +56,15 @@ struct HomeView: View {
             ScrollView {
                 VStack{
                     HStack {
-                        Text("Hi, \(authViewModel.userProfile?.display_name ?? "Guest")!")
-                            .font(.system(size: 24, weight: .semibold))
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Hi, \(authViewModel.userProfile?.display_name ?? "Guest")!")
+                                .font(.system(size: 24, weight: .semibold))
+                                .foregroundColor(.black)
+
+                            Text("Sun, October 15")
+                                .font(.system(size: 12))
+                                .foregroundColor(.gray)
+                        }
                         
                         Spacer()
                         
@@ -95,230 +105,206 @@ struct HomeView: View {
                     }
                     .padding(.horizontal)
                     
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 0) {
-                            HStack {
-                                Text("Insight")
-                                    .font(.system(size: 16, weight: .semibold))
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Budget Shopping")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.black)
+                        
+                        Text("$68.70")
+                            .font(.system(size: 32, weight: .bold))
+                            .foregroundColor(.black)
+                        
+                        Text("Left to spend of $500 limit")
+                            .font(.system(size: 14))
+                            .foregroundColor(.black)
+                        
+                        HStack {
+                            Text("1 day to go")
+                                .font(.system(size: 12))
+                                .foregroundColor(.black)
+                            Spacer()
+                            Text("$233.00 saved")
+                                .font(.system(size: 12))
+                                .foregroundColor(.black)
+                        }
+                        
+                        ZStack(alignment: .leading) {
+                            Capsule()
+                                .fill(Color.gray.opacity(0.2))
+                                .frame(height: 6)
+                            Capsule()
+                                .fill(Color.blue)
+                                .frame(width: 180, height: 6)
+                        }
+                        
+                        HStack(spacing: 8) {
+                            VStack(alignment: .leading) {
+                                Text("$567.00")
+                                    .font(.system(size: 20, weight: .semibold))
                                     .foregroundColor(.black)
-                                
-                                Spacer()
-                                
-                                Text("4/9998")
-                                    .font(.system(size: 14, weight: .semibold))
+                                Text("Incoming")
+                                    .font(.system(size: 10))
                                     .foregroundColor(.gray)
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal)
+                            .padding(.vertical, 12)
+                            .background(Color.gray.opacity(0.2))
+                            .cornerRadius(16)
                             
-                            TabView {
-                                InsightChartCard(
-                                    spendingData: [
-                                        .init(category: "Shopping", value: 20, color: .blue),
-                                        .init(category: "Food", value: 30, color: .orange),
-                                        .init(category: "Bills", value: 25, color: .green),
-                                        .init(category: "Entertainment", value: 25, color: .purple)
-                                    ],
-                                    index: 1,
-                                    total: 3,
-                                    title: "Phân loại thu chi",
-                                    highlightText: "cho mua sắm",
-                                    highlightValue: "20%",
-                                    icon: "bag.fill",
-                                    iconColor: .blue,
-                                    chartType: .pie
-                                )
-
-                                InsightChartCard(
-                                    spendingData: [
-                                        .init(category: "Tháng 8", value: 50, color: .green),
-                                        .init(category: "Tháng 9", value: 65, color: .orange),
-                                        .init(category: "Tháng 10", value: 80, color: .blue)
-                                    ],
-                                    index: 2,
-                                    total: 3,
-                                    title: "Chi tiêu theo tháng",
-                                    highlightText: "so với tháng trước",
-                                    highlightValue: "+15%",
-                                    icon: "chart.line.uptrend.xyaxis",
-                                    iconColor: .green,
-                                    chartType: .bar
-                                )
-
-                                InsightChartCard(
-                                    spendingData: [
-                                        .init(category: "Food", value: 40, color: .orange),
-                                        .init(category: "Bills", value: 20, color: .green),
-                                        .init(category: "Travel", value: 40, color: .purple)
-                                    ],
-                                    index: 3,
-                                    total: 3,
-                                    title: "Tỷ lệ tiết kiệm",
-                                    highlightText: "tốt hơn 30%",
-                                    highlightValue: "↑",
-                                    icon: "chart.donut.fill",
-                                    iconColor: .purple,
-                                    chartType: .line
-                                )
+                            VStack(alignment: .leading) {
+                                Text("$234.00")
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundColor(.black)
+                                Text("Outgoing")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.gray)
                             }
-                            .tabViewStyle(.page(indexDisplayMode: .automatic))
-                            .indexViewStyle(.page(backgroundDisplayMode: .automatic))
-                            .frame(height: 240)
-
-                            VStack(spacing: 12) {
-                                HStack(spacing: 24) {
-                                    VStack {
-                                        Image(systemName: "leaf.fill")
-                                            .font(.system(size: 20))
-                                            .foregroundColor(.green)
-                                        Text("9998")
-                                            .font(.system(size: 20, weight: .bold))
-                                            .foregroundColor(.black)
-                                        Text("Prompt")
-                                            .font(.system(size: 14))
-                                            .foregroundColor(.gray)
-                                    }
-                                    
-                                    Spacer()
-                                    
-                                    VStack {
-                                        Image(systemName: "square.stack.3d.up.fill")
-                                            .font(.system(size: 20))
-                                            .foregroundColor(.blue)
-                                        Text("$650")
-                                            .font(.system(size: 20, weight: .bold))
-                                            .foregroundColor(.black)
-                                        Text("Remain")
-                                            .font(.system(size: 14))
-                                            .foregroundColor(.gray)
-                                    }
-                                    
-                                    Spacer()
-                                    
-                                    VStack {
-                                        Image(systemName: "cloud.rain.fill")
-                                            .font(.system(size: 20))
-                                            .foregroundColor(.red)
-                                        Text("$210")
-                                            .font(.system(size: 20, weight: .bold))
-                                            .foregroundColor(.black)
-                                        Text("Expense")
-                                            .font(.system(size: 14))
-                                            .foregroundColor(.gray)
-                                    }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal)
+                            .padding(.vertical, 12)
+                            .background(Color.gray.opacity(0.2))
+                            .cornerRadius(16)
+                        }
+                    }
+                    .padding()
+                    .background(Color.white)
+                    .cornerRadius(24)
+                    .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+                    .padding(.horizontal)
+                    
+                    VStack(alignment: .leading, spacing: 0) {
+                        VStack(spacing: 12) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Spendly Smarter with AI")
+                                        .font(.system(size: 20, weight: .bold))
+                                        .foregroundColor(.white)
+                                    Text("3 more transaction to get 20 prompt")
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(.white)
                                 }
-                                .padding()
-                                .background(
-                                    RoundedRectangle(cornerRadius: 24)
-                                        .fill(Color.white)
-                                        .shadow(color: .gray.opacity(0.1), radius: 4, x: 0, y: 2)
+
+                                Spacer()
+
+                                Image(systemName: "banknote.fill")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 24, height: 24)
+                                    .rotationEffect(.degrees(-10))
+                                    .padding(.trailing, 10)
+                            }
+                            .padding(.horizontal)
+                            .padding(.vertical, 16)
+                            .background(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [
+                                        Color(hex: "614AB8"),
+                                        Color(hex: "508ED0")
+                                    ]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
                                 )
-
-                                HStack {
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text("3 more transaction to get")
-                                            .font(.system(size: 16, weight: .medium))
-                                            .foregroundColor(.black)
-                                        Text("20 prompt")
-                                            .font(.system(size: 16, weight: .medium))
-                                            .foregroundColor(.black)
-                                    }
-
-                                    Spacer()
-
-                                    Image(systemName: "banknote.fill")
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 24, height: 24)
-                                        .rotationEffect(.degrees(-10))
+                            )
+                            .cornerRadius(24)
+                        }
+                    }
+                    .padding()
+                    
+                    HStack(alignment: .center) {
+                        FlexibleView(data: budgets) { tag in
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.15)) {
+                                    selectedBudget = tag
                                 }
-                                .padding()
-                                .background(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [
-                                            Color(hex: "614AB8"),
-                                            Color(hex: "B4A5EC")
-                                        ]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
+                            } label: {
+                                Text(tag)
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(selectedBudget == tag ? .black : .gray)
+                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 16)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .fill(selectedBudget == tag ? Color.white : Color.gray.opacity(0.2))
                                     )
-                                    .opacity(0.5)
-                                )
-                                .cornerRadius(24)
+                                    .shadow(color: selectedBudget == tag ? Color.white.opacity(0.3) : .clear, radius: 4, x: 0, y: 2)
                             }
+                        }
+                   }
+                   .padding(.horizontal)
+                   .padding(.top, 4)
+                    
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack() {
+                            Text("Lastest Transaction")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.black)
+                            
+                            Spacer()
                         }
                         .padding(.horizontal)
                         
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack() {
-                                Text("Lastest Transaction")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.black)
-                                
-                                Spacer()
-                            }
-                            .padding(.horizontal)
-                            
-                            ForEach(groupedTransactions.keys.sorted(by: sortDates), id: \.self) { key in
-                                VStack(alignment: .leading, spacing: 12) {
-                                    HStack {
-                                        Text(key)
-                                            .font(.system(size: 16, weight: .semibold))
-                                            .foregroundColor(.gray)
-                                        
-                                        Spacer()
-                        
-                                        if let transactions = groupedTransactions[key], !transactions.isEmpty {
-                                            HStack(spacing: 12) {
-                                                let totalAmount = transactions.reduce(0) { sum, transaction in
-                                                    let amountStr = transaction.amount.replacingOccurrences(of: "[^0-9-]", with: "", options: .regularExpression)
-                                                    return sum + (Int(amountStr) ?? 0)
-                                                }
-                                                Text("\(totalAmount.formattedWithSeparator) VNĐ")
-                                                    .font(.system(size: 10, weight: .semibold))
-                                                    .foregroundColor(.white)
-                                                    .padding(.horizontal, 8)
-                                                    .padding(.vertical, 4)
-                                                    .background(totalAmount < 0 ? Color.red : Color.green)
-                                                    .cornerRadius(8)
-                                                
-                                                Button(action: { showCreateNew = true }) {
-                                                    Image(systemName: "plus.circle")
-                                                        .font(.system(size: 20))
-                                                        .foregroundColor(.gray)
-                                                }
-                                            }
-                                        }
-                                    }
-                                    .padding(.horizontal)
+                        ForEach(groupedTransactions.keys.sorted(by: sortDates), id: \.self) { key in
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Text(key)
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(.gray)
                                     
-                                    VStack(spacing: 8) {
-                                        ForEach(groupedTransactions[key] ?? []) { transaction in
-                                            NavigationLink(destination: TransactionDetailView(transaction: transaction)) {
-                                                TransactionItem(
-                                                    title: transaction.title,
-                                                    remain: transaction.amount,
-                                                    time: transaction.time,
-                                                    place: transaction.place,
-                                                    attachments: transaction.attachments,
-                                                    categoryColor: transaction.categoryColor,
-                                                    categoryIcon: transaction.categoryIcon
-                                                )
+                                    Spacer()
+                    
+                                    if let transactions = groupedTransactions[key], !transactions.isEmpty {
+                                        HStack(spacing: 12) {
+                                            let totalAmount = transactions.reduce(0) { sum, transaction in
+                                                let amountStr = transaction.amount.replacingOccurrences(of: "[^0-9-]", with: "", options: .regularExpression)
+                                                return sum + (Int(amountStr) ?? 0)
                                             }
-                                            .buttonStyle(PlainButtonStyle())
+                                            Text("\(totalAmount.formattedWithSeparator) VNĐ")
+                                                .font(.system(size: 10, weight: .semibold))
+                                                .foregroundColor(.white)
+                                                .padding(.horizontal, 8)
+                                                .padding(.vertical, 4)
+                                                .background(totalAmount < 0 ? Color.red : Color.green)
+                                                .cornerRadius(8)
+                                            
+                                            Button(action: { showCreateNew = true }) {
+                                                Image(systemName: "plus.circle")
+                                                    .font(.system(size: 20))
+                                                    .foregroundColor(.gray)
+                                            }
                                         }
                                     }
-                                    .padding(.horizontal)
                                 }
+                                .padding(.horizontal)
+                                
+                                VStack(spacing: 8) {
+                                    ForEach(groupedTransactions[key] ?? []) { transaction in
+                                        NavigationLink(destination: TransactionDetailView(transaction: transaction)) {
+                                            TransactionItem(
+                                                title: transaction.title,
+                                                remain: transaction.amount,
+                                                time: transaction.time,
+                                                place: transaction.place,
+                                                attachments: transaction.attachments,
+                                                categoryColor: transaction.categoryColor,
+                                                categoryIcon: transaction.categoryIcon
+                                            )
+                                        }
+                                        .buttonStyle(PlainButtonStyle())
+                                    }
+                                }
+                                .padding(.horizontal)
                             }
-                            
-                            Text("No more transactions")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(.gray)
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .padding(.vertical, 16)
                         }
-                        .padding(.bottom, 40)
-                        .padding(.top, 20)
+                        
+                        Text("No more transactions")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.gray)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.vertical, 16)
                     }
+                    .padding(.bottom, 40)
+                    .padding(.top, 20)
                 }
             }
         }
