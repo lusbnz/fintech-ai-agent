@@ -26,7 +26,7 @@ struct ChatHistoryView: View {
                            .clipShape(Circle())
                    }
                }
-               .padding(.horizontal)
+               .padding(.horizontal, 8)
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 8) {

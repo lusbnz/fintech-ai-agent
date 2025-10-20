@@ -5,7 +5,7 @@ struct ThirdSlideView: View {
     let title: String
     let description: String
     @ObservedObject var viewModel: IntroViewModel
-    @StateObject private var authVM = AuthViewModel()
+    @EnvironmentObject var authVM: AuthViewModel
     
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {

@@ -88,6 +88,10 @@ struct SettingView: View {
                     }
                 }
                 
+                NavigationLink("Export Data") {
+                    // Feature request screen
+                }
+                
                 NavigationLink("Ask for Feature") {
                     // Feature request screen
                 }
