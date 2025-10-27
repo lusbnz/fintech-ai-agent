@@ -8,16 +8,22 @@ struct BarStat: Identifiable {
 }
 
 struct BudgetDetailView: View {
+    let budget: Budget
     let title: String
     let remain: String
     @EnvironmentObject var authViewModel: AuthViewModel
     @Environment(\.dismiss) var dismiss
+    @StateObject private var viewModel = BudgetViewModel()
     @State private var showCreateNew = false
     @State private var currentWeekOffset = 0
     @State private var selectedBudget: String = "All"
     @State private var showWeekPicker = false
     @State private var selectedDate = Date()
     @State private var selectedMonth: String? = nil
+    
+    private var userCurrency: String? {
+        authViewModel.userProfile?.currency
+    }
     
     let budgets = ["All", "Income", "Outgoing"]
     
@@ -36,30 +42,30 @@ struct BudgetDetailView: View {
         .init(month: "Dec", views: 90000)
     ]
     
-    var groupedTransactions: [String: [Transaction]] = [
-        "Today": [
-            Transaction(
-                title: "Shopping",
-                amount: "-20,000 VNĐ",
-                time: "14:30",
-                place: "Trung Yên",
-                attachments: 1,
-                categoryIcon: "bag.fill",
-                categoryColor: .orange
-            )
-        ],
-        "Fri, Aug 30": [
-            Transaction(
-                title: "Groceries",
-                amount: "-120,000 VNĐ",
-                time: "16:00",
-                place: "Vinmart",
-                attachments: 2,
-                categoryIcon: "cart.fill",
-                categoryColor: .green
-            )
-        ]
-    ]
+//    var groupedTransactions: [String: [Transaction]] = [
+//        "Today": [
+//            Transaction(
+//                title: "Shopping",
+//                amount: "-20,000 VNĐ",
+//                time: "14:30",
+//                place: "Trung Yên",
+//                attachments: 1,
+//                categoryIcon: "bag.fill",
+//                categoryColor: .orange
+//            )
+//        ],
+//        "Fri, Aug 30": [
+//            Transaction(
+//                title: "Groceries",
+//                amount: "-120,000 VNĐ",
+//                time: "16:00",
+//                place: "Vinmart",
+//                attachments: 2,
+//                categoryIcon: "cart.fill",
+//                categoryColor: .green
+//            )
+//        ]
+//    ]
     
     var body: some View {
         ZStack {
@@ -98,8 +104,12 @@ struct BudgetDetailView: View {
             }
             Spacer()
             Menu {
-                Button("Edit", systemImage: "pencil") { }
-                Button("Delete", systemImage: "trash", role: .destructive) { }
+                Button("Edit", systemImage: "pencil") {
+                    viewModel.showEdit = true
+                }
+                Button("Delete", systemImage: "trash", role: .destructive) {
+                    viewModel.showDeleteConfirm = true
+                }
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 14, weight: .semibold))
@@ -112,12 +122,35 @@ struct BudgetDetailView: View {
         }
         .padding(.horizontal)
         .padding(.top, 8)
+        .fullScreenCover(isPresented: $viewModel.showEdit) {
+            NavigationStack {
+                CreateBudgetView(
+                    budget: budget,
+                    onSuccess: {
+                        dismiss()
+                    }
+                )
+            }
+        }
+        .alert("Delete Budget", isPresented: $viewModel.showDeleteConfirm) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                Task {
+                    let success = await viewModel.deleteBudget(budget)
+                    if success {
+                        dismiss()
+                    }
+                }
+            }
+        } message: {
+            Text("Are you sure you want to delete \"\(budget.name)\"?")
+        }
     }
     
     private var titleSection: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Shopping")
+                Text(budget.name)
                     .font(.system(size: 36, weight: .semibold))
                     .foregroundColor(.black)
                 Text("64 Items")
@@ -161,7 +194,7 @@ struct BudgetDetailView: View {
             Text("Total Amounts")
                 .font(.system(size: 18, weight: .bold))
                 .foregroundColor(.black)
-            Text("Total: 1,036,000")
+            Text(String(budget.formattedAmount(using: userCurrency)))
                 .font(.system(size: 14))
                 .foregroundColor(.gray)
             
@@ -221,35 +254,35 @@ struct BudgetDetailView: View {
     
     private var transactionSection: some View {
         VStack(alignment: .leading, spacing: 24) {
-            ForEach(groupedTransactions.keys.sorted(by: sortDates), id: \.self) { key in
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Text(key)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.gray)
-                        Spacer()
-                    }
-                    .padding(.horizontal)
-                    
-                    VStack(spacing: 8) {
-                        ForEach(groupedTransactions[key] ?? []) { transaction in
-                            NavigationLink(destination: TransactionDetailView(transaction: transaction)) {
-                                TransactionItem(
-                                    title: transaction.title,
-                                    remain: transaction.amount,
-                                    time: transaction.time,
-                                    place: transaction.place,
-                                    attachments: transaction.attachments,
-                                    categoryColor: transaction.categoryColor,
-                                    categoryIcon: transaction.categoryIcon
-                                )
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                        }
-                    }
-                    .padding(.horizontal)
-                }
-            }
+//            ForEach(groupedTransactions.keys.sorted(by: sortDates), id: \.self) { key in
+//                VStack(alignment: .leading, spacing: 12) {
+//                    HStack {
+//                        Text(key)
+//                            .font(.system(size: 16, weight: .semibold))
+//                            .foregroundColor(.gray)
+//                        Spacer()
+//                    }
+//                    .padding(.horizontal)
+//                    
+//                    VStack(spacing: 8) {
+//                        ForEach(groupedTransactions[key] ?? []) { transaction in
+//                            NavigationLink(destination: TransactionDetailView(transaction: transaction)) {
+//                                TransactionItem(
+//                                    title: transaction.title,
+//                                    remain: transaction.amount,
+//                                    time: transaction.time,
+//                                    place: transaction.place,
+//                                    attachments: transaction.attachments,
+//                                    categoryColor: transaction.categoryColor,
+//                                    categoryIcon: transaction.categoryIcon
+//                                )
+//                            }
+//                            .buttonStyle(PlainButtonStyle())
+//                        }
+//                    }
+//                    .padding(.horizontal)
+//                }
+//            }
             
             Text("No more transactions")
                 .font(.system(size: 12, weight: .semibold))

@@ -4,6 +4,7 @@ struct TransactionDetailView: View {
     let transaction: Transaction
     @Environment(\.dismiss) var dismiss
     @State private var showMenu = false
+//    @StateObject private var viewModel = TransactionViewModel()
     
     var body: some View {
         ScrollView {
@@ -21,8 +22,12 @@ struct TransactionDetailView: View {
                     }
                     Spacer()
                     Menu {
-                        Button("Edit", systemImage: "pencil") { }
-                        Button("Delete", systemImage: "trash", role: .destructive) { }
+                        Button("Edit", systemImage: "pencil") {
+//                            viewModel.showEdit = true
+                        }
+                        Button("Delete", systemImage: "trash", role: .destructive) {
+//                            viewModel.showDeleteConfirm = true
+                        }
                     } label: {
                         Image(systemName: "ellipsis")
                             .font(.system(size: 14, weight: .semibold))
@@ -40,16 +45,18 @@ struct TransactionDetailView: View {
                     Text("19 Aug 2025")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(.black)
-                    Text(transaction.title)
+//                    Text(transaction.name)
+                    Text("Transaction Name")
                         .font(.system(size: 24, weight: .semibold))
                         .foregroundColor(.black)
                 }
                 .padding(.horizontal)
                 
                 VStack(alignment: .leading, spacing: 24) {
-                    timelineRow(icon: "mappin.and.ellipse", title: transaction.place)
+//                    timelineRow(icon: "mappin.and.ellipse", title: transaction.location.name)
+                    timelineRow(icon: "mappin.and.ellipse", title: "Transaction name")
                     timelineRow(icon: "tag", title: "Shopping")
-                    timelineRow(icon: "hand.thumbsup", title: "Tổng chi tiêu", value: transaction.amount)
+                    timelineRow(icon: "hand.thumbsup", title: "Tổng chi tiêu", value: String(transaction.amount))
                     
                     numberedRow(number: 1, title: "Cam sành", value: "20,000 VNĐ")
                     imageSection(icon: "photo.on.rectangle", imageName: "intro1", time: "18:25")
@@ -72,6 +79,29 @@ struct TransactionDetailView: View {
         )
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
+//        .fullScreenCover(isPresented: $viewModel.showEdit) {
+//            NavigationStack {
+//                CreateTransactionView(
+//                    transaction: transaction,
+//                    onSuccess: {
+//                        dismiss()
+//                    }
+//                )
+//            }
+//        }
+//        .alert("Delete Transaction", isPresented: $viewModel.showDeleteConfirm) {
+//            Button("Cancel", role: .cancel) { }
+//            Button("Delete", role: .destructive) {
+//                Task {
+//                    let success = await viewModel.deleteTransaction(transaction)
+//                    if success {
+//                        dismiss()
+//                    }
+//                }
+//            }
+//        } message: {
+//            Text("Are you sure you want to delete \"\(transaction.name)\"?")
+//        }
     }
     
     func timelineRow(icon: String, title: String, value: String? = nil) -> some View {

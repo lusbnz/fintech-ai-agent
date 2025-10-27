@@ -2,14 +2,38 @@ import SwiftUI
 
 struct CreateBudgetView: View {
     @Environment(\.dismiss) var dismiss
+    @StateObject private var viewModel = BudgetViewModel()
+    
+    let budget: Budget?
+    let onSuccess: () -> Void
     
     @State private var budgetName: String = ""
     @State private var amount: String = ""
     @State private var dateTime: Date = Date()
     @State private var period: String = "1 Month"
-    @State private var showDescriptionInput = false
     
     let periods = ["Single", "1 Week", "1 Month", "1 Year"]
+    
+    private var isFormValid: Bool {
+        !budgetName.trimmingCharacters(in: .whitespaces).isEmpty &&
+        !amount.trimmingCharacters(in: .whitespaces).isEmpty &&
+        Double(amount) ?? 0 > 0
+    }
+    
+    let periodMap: [String: String] = [
+        "single": "Single",
+        "1_week": "1 Week",
+        "1_month": "1 Month",
+        "1_year": "1 Year"
+    ]
+    
+    private func displayPeriod(from code: String) -> String {
+        periodMap[code.lowercased()] ?? "Single"
+    }
+
+    private func codePeriod(from display: String) -> String {
+        periodMap.first { $0.value == display }?.key ?? "single"
+    }
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -25,7 +49,7 @@ struct CreateBudgetView: View {
                 VStack(spacing: 18) {
                     Spacer(minLength: 12)
                     
-                    Text("Create Budget")
+                    Text(budget == nil ? "Create Budget" : "Update Budget")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(Color(hex: "636363"))
                     
@@ -51,8 +75,9 @@ struct CreateBudgetView: View {
                         .cornerRadius(24)
                     
                     infoRow(icon: "calendar", title: "Datetime") {
-                        DatePicker("", selection: $dateTime, displayedComponents: [.date, .hourAndMinute])
+                        DatePicker("", selection: $dateTime, displayedComponents: [.date])
                             .labelsHidden()
+                            .datePickerStyle(.compact)
                     }
                     
                     VStack(alignment: .leading, spacing: 8) {
@@ -64,7 +89,6 @@ struct CreateBudgetView: View {
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(Color(hex: "636363"))
                         }
-                        
                         Text("Select how long this budget lasts")
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundColor(Color(hex: "636363"))
@@ -87,11 +111,7 @@ struct CreateBudgetView: View {
             VStack {
                 Spacer()
                 LinearGradient(
-                    gradient: Gradient(colors: [
-                        Color.white.opacity(0.7),
-                        Color.white.opacity(0.8),
-                        Color.white.opacity(0.9)
-                    ]),
+                    gradient: Gradient(colors: [.white.opacity(0.7), .white.opacity(0.9)]),
                     startPoint: .top,
                     endPoint: .bottom
                 )
@@ -101,42 +121,93 @@ struct CreateBudgetView: View {
             .ignoresSafeArea(edges: .bottom)
             
             VStack {
-                Button(action: {
-                    print("Budget Created: \(budgetName), \(amount), \(dateTime), \(period)")
-                }) {
-                    ZStack(alignment: .leading) {
-                        Text("Create")
-                            .font(.system(size: 14))
-                            .fontWeight(.medium)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 48)
-                            .background(
-                                RoundedRectangle(cornerRadius: 32)
-                                    .fill(Color.black.opacity(0.75))
-                            )
-                        
-                        Image(systemName: "arrow.right")
-                            .font(.system(size: 20, weight: .medium))
-                            .foregroundColor(.white)
-                            .frame(width: 42, height: 42)
-                            .background(Circle().fill(Color.black))
-                            .frame(maxWidth: .infinity, alignment: .trailing)
+                if viewModel.isLoading {
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                        .tint(.white)
+                        .frame(height: 48)
+                } else {
+                    Button(action: createOrUpdateBudget) {
+                        ZStack(alignment: .leading) {
+                            Text(budget == nil ? "Create" : "Update")
+                                .font(.system(size: 14))
+                                .fontWeight(.medium)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 48)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 32)
+                                        .fill(isFormValid ? Color.black.opacity(0.75) : Color.gray.opacity(0.5))
+                                )
+                            
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: 20, weight: .medium))
+                                .foregroundColor(.white)
+                                .frame(width: 42, height: 42)
+                                .background(Circle().fill(Color.black))
+                                .frame(maxWidth: .infinity, alignment: .trailing)
+                        }
                     }
+                    .disabled(!isFormValid || viewModel.isLoading)
                 }
-                .padding(.horizontal)
-                .padding(.bottom, 40)
-                .shadow(color: .black.opacity(0.2), radius: 6, x: 0, y: 3)
+                
+                if let error = viewModel.error {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundColor(.red)
+                        .padding(.horizontal)
+                        .padding(.top, 8)
+                }
+                
+                Spacer().frame(height: 40)
             }
+            .padding(.horizontal)
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
-                Button(action: { dismiss() }) {
+                Button { dismiss() } label: {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.black)
                 }
+            }
+        }
+        .onAppear {
+            if let budget = budget {
+                budgetName = budget.name
+                amount = String(budget.amount)
+                dateTime = budget.start_date
+                period = displayPeriod(from: budget.period)
+            }
+        }
+    }
+    
+    private func createOrUpdateBudget() {
+        guard let amountValue = Double(amount) else { return }
+        
+        Task {
+            let success: Bool
+            if let budget = budget {
+                success = await viewModel.updateBudget(
+                    id: budget.id,
+                    name: budgetName,
+                    amount: amountValue,
+                    start_date: dateTime,
+                    period: period
+                )
+            } else {
+                success = await viewModel.createBudget(
+                    name: budgetName,
+                    amount: amountValue,
+                    start_date: dateTime,
+                    period: period
+                )
+            }
+            
+            if success {
+                onSuccess()
+                dismiss()
             }
         }
     }

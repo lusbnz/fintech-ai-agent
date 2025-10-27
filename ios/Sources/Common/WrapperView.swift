@@ -34,11 +34,11 @@ struct WrapperView: View {
                         showChatView = true
                     }
                 
-                ChallengeView()
-                    .tabItem {
-                        Label("Challenge", systemImage: "paperplane")
-                    }
-                    .tag(Tabs.challenge)
+//                ChallengeView()
+//                    .tabItem {
+//                        Label("Challenge", systemImage: "paperplane")
+//                    }
+//                    .tag(Tabs.challenge)
             }
             .tabBarMinimizeBehavior(.onScrollDown)
             
@@ -81,5 +81,9 @@ struct WrapperView: View {
                 CreateTransactionView()
             }
         }
+        .task {
+            await authViewModel.fetchProfile()
+        }
+        .environmentObject(authViewModel)
     }
 }

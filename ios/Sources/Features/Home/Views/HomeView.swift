@@ -173,42 +173,6 @@ struct HomeView: View {
                     .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
                     .padding(.horizontal)
                     
-//                    VStack(alignment: .leading, spacing: 0) {
-//                        VStack(spacing: 12) {
-//                            HStack {
-//                                VStack(alignment: .leading, spacing: 4) {
-//                                    Text("Spendly Smarter with AI")
-//                                        .font(.system(size: 20, weight: .bold))
-//                                        .foregroundColor(.white)
-//                                    Text("3 more transaction to get 20 prompt")
-//                                        .font(.system(size: 14, weight: .medium))
-//                                        .foregroundColor(.white)
-//                                }
-//
-//                                Spacer()
-//                                
-//                                Image(systemName: "banknote")
-//                                    .font(.system(size: 20))
-//                                    .rotationEffect(.degrees(-10))
-//
-//                            }
-//                            .padding(.horizontal)
-//                            .padding(.vertical, 16)
-//                            .background(
-//                                LinearGradient(
-//                                    gradient: Gradient(colors: [
-//                                        Color(hex: "614AB8"),
-//                                        Color(hex: "508ED0")
-//                                    ]),
-//                                    startPoint: .topLeading,
-//                                    endPoint: .bottomTrailing
-//                                )
-//                            )
-//                            .cornerRadius(24)
-//                        }
-//                    }
-//                    .padding()
-                    
                     HStack(alignment: .center) {
                         FlexibleView(data: budgets) { tag in
                             Button {
@@ -305,9 +269,6 @@ struct HomeView: View {
                     .padding(.top, 20)
                 }
             }
-        }
-        .task {
-            await authViewModel.fetchProfile()
         }
         .navigationTitle("Home")
         .fullScreenCover(isPresented: $showCreateNew) {

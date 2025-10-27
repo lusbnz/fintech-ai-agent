@@ -1,11 +1,9 @@
 import SwiftUI
-import GoogleSignInSwift
 
-struct ThirdSlideView: View {
+struct SecondSlideView: View {
     let title: String
     let description: String
     @ObservedObject var viewModel: IntroViewModel
-    @EnvironmentObject var authVM: AuthViewModel
     
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
@@ -27,11 +25,11 @@ struct ThirdSlideView: View {
                             .blur(radius: 1)
                         
                         VStack(alignment: .leading) {
-                            Text("5000 +")
+                            Text("2")
                                 .font(.system(size: 32))
                                 .fontWeight(.bold)
                                 .foregroundColor(.black)
-                            Text("Daily users")
+                            Text("Seconds to get an answer")
                                 .font(.system(size: 14))
                                 .fontWeight(.medium)
                                 .foregroundColor(.black)
@@ -79,36 +77,44 @@ struct ThirdSlideView: View {
                         
             Spacer()
 
-            HStack(spacing: 12) {
-                Spacer()
-                  
-                Button(action: {
-                    Task {
-                        await authVM.signinGoogle()
+            Button(action: {
+                if viewModel.currentPage < viewModel.screens.count - 1 {
+                    withAnimation {
+                        viewModel.currentPage += 1
                     }
-                }) {
-                    HStack {
-                        Image("google-logo")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 20, height: 20)
-                    
-                        Text("Signin with Google")
-                            .font(.system(size: 14))
-                            .fontWeight(.medium)
-                            .foregroundColor(.black)
-                    }
-                    .frame(maxWidth: .infinity, minHeight: 48)
-                    .background(
-                        RoundedRectangle(cornerRadius: 32)
-                            .fill(Color.white)
-                    )
                 }
-                
-                Spacer()
+            }) {
+                ZStack(alignment: .leading) {
+                    Text("Get started now")
+                        .font(.system(size: 14))
+                        .fontWeight(.medium)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                        .background(
+                            RoundedRectangle(cornerRadius: 32)
+                                .fill(Color.black)
+                                .opacity(0.7)
+                        )
+                    
+                    Button(action: {
+                        print("Button tapped")
+                    }) {
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 20))
+                            .fontWeight(.medium)
+                            .foregroundColor(.white)
+                            .frame(width: 42, height: 42)
+                            .background(
+                                Circle()
+                                    .fill(Color.black)
+                            )
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                }
+                .frame(maxWidth: .infinity, alignment: .topLeading)
             }
             .padding(.horizontal)
-            .padding(.bottom, 40)
             .padding(.top, 100)
         }
     }

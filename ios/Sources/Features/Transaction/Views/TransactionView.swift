@@ -188,7 +188,11 @@ struct TransactionView: View {
 
                        Spacer()
 
-                       NavigationLink(destination: BudgetView()) {
+                       NavigationLink(
+                        destination:
+                            BudgetView()
+                                .environmentObject(authViewModel)
+                       ) {
                            Image(systemName: "gearshape")
                                .font(.system(size: 18, weight: .semibold))
                                .foregroundColor(.gray)
