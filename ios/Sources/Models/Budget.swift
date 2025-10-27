@@ -5,7 +5,7 @@ struct Budget: Codable, Identifiable {
     let name: String
     let user_id: String
     let amount: Double
-    let start_date: String
+    let start_date: Date   
     let remain: Double
     let limit: Double
     let period: String
@@ -15,15 +15,6 @@ struct Budget: Codable, Identifiable {
     enum CodingKeys: String, CodingKey {
         case id = "_id"
         case name, user_id, amount, start_date, remain, limit, period, created_at, updated_at
- penn    }
-    
-    // Dùng để format ngày
-    var startDate: Date {
-        ISO8601DateFormatter().date(from: start_date) ?? Date()
-    }
-    
-    var formattedAmount: String {
-        amount.formatted(.currency(code: "USD")) // Sẽ xử lý theo currency sau
     }
 }
 
@@ -37,9 +28,13 @@ struct BudgetData: Codable {
     let pagination: Pagination
 }
 
-struct Pagination: Codable {
-    let page: Int
-    let limit: Int
-    let total: Int
-    let total_page: Int
+extension Budget {
+    func formattedAmount(using currencyCode: String?) -> String {
+        let code = (currencyCode ?? "USD").uppercased()
+        
+        return amount.formatted(
+            .currency(code: code)
+                .locale(Locale(identifier: code == "VND" ? "vi_VN" : "en_US"))
+        )
+    }
 }

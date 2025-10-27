@@ -25,8 +25,16 @@ final class AuthService {
         TokenManager.shared.refreshToken = response.data.refresh_token
     }
 
-    func getProfile() async throws -> UserProfile {
-        let response: ProfileResponse = try await APIClient.shared.request(.profile, as: ProfileResponse.self)
+    func getProfile() async throws -> User {
+        let response: UserResponse = try await APIClient.shared.request(.profile, as: UserResponse.self)
+        return response.data
+    }
+    
+    func updateProfile(body: [String: Any]) async throws -> User {
+        let response: UserResponse = try await APIClient.shared.request(
+            .updateProfile(body: body),
+            as: UserResponse.self
+        )
         return response.data
     }
 }

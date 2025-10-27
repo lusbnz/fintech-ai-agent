@@ -5,8 +5,8 @@ import FirebaseAuth
 
 @MainActor
 final class AuthViewModel: ObservableObject {
-    @Published var user: User? = nil
-    @Published var userProfile: UserProfile? = nil
+    @Published var user: UserFirebase? = nil
+    @Published var userProfile: User? = nil
     @Published var isLoggedIn: Bool = false
     @Published var isLoading: Bool = false
 
@@ -35,7 +35,7 @@ final class AuthViewModel: ObservableObject {
             let credential = GoogleAuthProvider.credential(withIDToken: googleIdToken, accessToken: accessToken)
             let result = try await Auth.auth().signIn(with: credential)
             let firebaseIdToken = try await result.user.getIDToken()
-            self.user = result.user
+            self.user = UserFirebase(from: result.user)
             try await AuthService.shared.loginWithFirebaseToken(firebaseIdToken)
             await fetchProfile()
             self.isLoggedIn = true
@@ -56,6 +56,16 @@ final class AuthViewModel: ObservableObject {
             TokenManager.shared.clear()
         }
         isLoading = false
+    }
+    
+    func updateProfile(displayName: String? = nil, currency: String? = nil, lang: String? = nil) async throws {
+        var body: [String: Any] = [:]
+        if let displayName = displayName { body["display_name"] = displayName }
+        if let currency = currency { body["currency"] = currency }
+        if let lang = lang { body["lang"] = lang }
+
+        let updated = try await AuthService.shared.updateProfile(body: body)
+        self.userProfile = updated
     }
 
     func logout() {

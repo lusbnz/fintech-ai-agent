@@ -1,9 +1,11 @@
 import SwiftUI
+import GoogleSignInSwift
 
-struct SecondSlideView: View {
+struct ThirdSlideView: View {
     let title: String
     let description: String
     @ObservedObject var viewModel: IntroViewModel
+    @EnvironmentObject var authVM: AuthViewModel
     
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
@@ -25,11 +27,11 @@ struct SecondSlideView: View {
                             .blur(radius: 1)
                         
                         VStack(alignment: .leading) {
-                            Text("2")
+                            Text("5000 +")
                                 .font(.system(size: 32))
                                 .fontWeight(.bold)
                                 .foregroundColor(.black)
-                            Text("Seconds to get an answer")
+                            Text("Daily users")
                                 .font(.system(size: 14))
                                 .fontWeight(.medium)
                                 .foregroundColor(.black)
@@ -77,44 +79,36 @@ struct SecondSlideView: View {
                         
             Spacer()
 
-            Button(action: {
-                if viewModel.currentPage < viewModel.screens.count - 1 {
-                    withAnimation {
-                        viewModel.currentPage += 1
+            HStack(spacing: 12) {
+                Spacer()
+                  
+                Button(action: {
+                    Task {
+                        await authVM.signinGoogle()
                     }
-                }
-            }) {
-                ZStack(alignment: .leading) {
-                    Text("Get started now")
-                        .font(.system(size: 14))
-                        .fontWeight(.medium)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 48)
-                        .background(
-                            RoundedRectangle(cornerRadius: 32)
-                                .fill(Color.black)
-                                .opacity(0.7)
-                        )
+                }) {
+                    HStack {
+                        Image("google-logo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 20, height: 20)
                     
-                    Button(action: {
-                        print("Button tapped")
-                    }) {
-                        Image(systemName: "arrow.right")
-                            .font(.system(size: 20))
+                        Text("Signin with Google")
+                            .font(.system(size: 14))
                             .fontWeight(.medium)
-                            .foregroundColor(.white)
-                            .frame(width: 42, height: 42)
-                            .background(
-                                Circle()
-                                    .fill(Color.black)
-                            )
+                            .foregroundColor(.black)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                    .frame(maxWidth: .infinity, minHeight: 48)
+                    .background(
+                        RoundedRectangle(cornerRadius: 32)
+                            .fill(Color.white)
+                    )
                 }
-                .frame(maxWidth: .infinity, alignment: .topLeading)
+                
+                Spacer()
             }
             .padding(.horizontal)
+            .padding(.bottom, 40)
             .padding(.top, 100)
         }
     }
