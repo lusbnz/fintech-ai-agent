@@ -24,6 +24,7 @@ final class BudgetViewModel: ObservableObject {
         do {
             let response = try await BudgetService.shared.getBudgets(page: 1)
             budgets = response.data.data
+            print("Budget list: \(budgets)")
         } catch {
             self.error = "Failed to load budgets: \(error.localizedDescription)"
         }

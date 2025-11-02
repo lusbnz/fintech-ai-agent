@@ -1,69 +1,129 @@
+import SwiftUI
 import MapKit
+import CoreLocation
 
 struct MapPickerSheet: View {
     @Environment(\.dismiss) var dismiss
     @Binding var selectedLocation: Location?
 
     @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 10.762622, longitude: 106.660172), // TP.HCM mặc định
-        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+        center: CLLocationCoordinate2D(latitude: 21.0169, longitude: 105.7839),
+        span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
     )
-
-    @State private var selectedCoordinate: CLLocationCoordinate2D? = nil
     @State private var locationName: String = ""
+    @State private var isLoading = true
+    @State private var errorText: String?
 
     var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
-                Map(coordinateRegion: $region, showsUserLocation: true, annotationItems: selectedCoordinate.map { [ $0 ] } ?? []) { coord in
-                    MapMarker(coordinate: coord, tint: .red)
-                }
-                .ignoresSafeArea(edges: .top)
-                .onTapGesture(coordinateSpace: .local) { point in
-                    let coord = convertTapToCoordinate(point)
-                    selectedCoordinate = coord
+        ZStack {
+            // 🗺 Map full-screen, subtle blur transition
+            Map(coordinateRegion: $region, showsUserLocation: true)
+                .ignoresSafeArea()
+                .task { await centerOnUserLocation() }
+                .overlay(alignment: .topLeading) {
+                    // Dismiss floating button
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 14, weight: .bold))
+                            .padding(10)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Circle())
+                            .shadow(radius: 2)
+                            .padding()
+                    }
                 }
 
+            // 🎯 Floating marker pin
+            VStack {
+                Spacer()
+                Image(systemName: "mappin.circle.fill")
+                    .font(.system(size: 48))
+                    .foregroundStyle(.red, .white)
+                    .symbolRenderingMode(.palette)
+                    .shadow(color: .black.opacity(0.15), radius: 4)
+                    .padding(.bottom, 50)
+            }
+
+            // 🧾 Floating bottom sheet (Glass style)
+            VStack(spacing: 10) {
+                Spacer()
+
                 VStack(spacing: 12) {
-                    TextField("Place name", text: $locationName)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                    Capsule()
+                        .fill(Color.secondary.opacity(0.4))
+                        .frame(width: 40, height: 4)
+                        .padding(.top, 6)
+
+                    Text("Confirm this location?")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.primary)
+
+                    TextField("Enter a place name (optional)", text: $locationName)
+                        .textFieldStyle(.roundedBorder)
                         .padding(.horizontal)
 
                     Button {
-                        if let coord = selectedCoordinate {
-                            selectedLocation = Location(
-                                name: locationName.isEmpty ? "Unnamed" : locationName,
-                                lat: coord.latitude,
-                                lng: coord.longitude
-                            )
-                            dismiss()
-                        }
+                        let coord = region.center
+                        selectedLocation = Location(
+                            name: locationName.isEmpty ? "Unnamed" : locationName,
+                            lat: coord.latitude,
+                            lng: coord.longitude
+                        )
+                        dismiss()
                     } label: {
-                        Text("Confirm Location")
+                        Label("Confirm Location", systemImage: "checkmark.circle.fill")
+                            .font(.system(size: 17, weight: .semibold))
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(selectedCoordinate == nil ? Color.gray.opacity(0.4) : Color.blue)
+                            .background(.blue.gradient)
                             .foregroundColor(.white)
-                            .cornerRadius(10)
+                            .clipShape(Capsule())
                             .padding(.horizontal)
+                            .shadow(color: .blue.opacity(0.2), radius: 6, y: 4)
                     }
-                    .disabled(selectedCoordinate == nil)
 
-                    Button("Cancel") {
-                        dismiss()
+                    if let error = errorText {
+                        Text(error)
+                            .font(.footnote)
+                            .foregroundColor(.red)
                     }
-                    .padding(.bottom, 12)
-                    .foregroundColor(.red)
                 }
-                .background(Color.white)
+                .padding(.bottom, 20)
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+                .shadow(radius: 10)
+                .padding()
             }
-            .navigationTitle("Select Location")
-            .navigationBarTitleDisplayMode(.inline)
+
+            if isLoading {
+                ProgressView("Locating...")
+                    .padding(12)
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
         }
     }
 
-    private func convertTapToCoordinate(_ point: CGPoint) -> CLLocationCoordinate2D {
-        let mapView = MKMapView()
-        return mapView.convert(point, toCoordinateFrom: nil)
+    // MARK: - Helpers
+    private func centerOnUserLocation() async {
+        do {
+            let location = try await getUserLocation()
+            region.center = location.coordinate
+            isLoading = false
+        } catch {
+            errorText = "Unable to get location"
+            isLoading = false
+        }
+    }
+
+    private func getUserLocation() async throws -> CLLocation {
+        let manager = CLLocationManager()
+        manager.requestWhenInUseAuthorization()
+        guard let loc = manager.location else {
+            throw NSError(domain: "LocationError", code: -1)
+        }
+        return loc
     }
 }

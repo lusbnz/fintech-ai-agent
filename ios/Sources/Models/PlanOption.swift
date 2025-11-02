@@ -16,7 +16,6 @@ struct FeatureItem: Codable, Identifiable {
     let value: CodableValue
 }
 
-// Dùng để parse "value" có thể là string/number/bool
 enum CodableValue: Codable {
     case string(String)
     case number(Double)
@@ -58,3 +57,4 @@ struct PriceData: Codable {
     let plan: [String: [PlanOption]] // "Pro", "Premium"
     let Feature: [String: [FeatureItem]] // "Free", "Pro", "Premium"
 }
+

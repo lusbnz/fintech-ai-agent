@@ -6,6 +6,7 @@ enum Tabs: Int {
 
 struct WrapperView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    @EnvironmentObject var transactionViewModel: TransactionViewModel
     @State private var activeTab = Tabs.home
     @State private var showChatView = false
     @State private var showCreateTransaction = false
@@ -25,14 +26,14 @@ struct WrapperView: View {
                     }
                     .tag(Tabs.transaction)
             
-                Color.clear
-                    .tabItem {
-                        Label("Chat", systemImage: "bubbles.and.sparkles")
-                    }
-                    .tag(Tabs.chat)
-                    .onAppear {
-                        showChatView = true
-                    }
+//                Color.clear
+//                    .tabItem {
+//                        Label("Chat", systemImage: "bubbles.and.sparkles")
+//                    }
+//                    .tag(Tabs.chat)
+//                    .onAppear {
+//                        showChatView = true
+//                    }
                 
 //                ChallengeView()
 //                    .tabItem {
@@ -85,5 +86,6 @@ struct WrapperView: View {
             await authViewModel.fetchProfile()
         }
         .environmentObject(authViewModel)
+        .environmentObject(transactionViewModel)
     }
 }

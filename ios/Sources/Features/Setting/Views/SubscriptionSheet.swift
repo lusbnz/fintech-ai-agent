@@ -2,8 +2,9 @@ import SwiftUI
 
 struct SubscriptionSheet: View {
     @Environment(\.dismiss) var dismiss
-    @State private var selectedPlan = "One Year"
+    @State private var selectedPlan = "1_year"
     @State private var selectedTab = "Pro"
+    @StateObject private var viewModel = PriceViewModel()
     
     var body: some View {
         ZStack(alignment: .top) {
@@ -73,25 +74,37 @@ struct SubscriptionSheet: View {
                     .clipShape(RoundedRectangle(cornerRadius: 32))
                     .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
                     
-                    TabView(selection: $selectedTab) {
-                        VStack(spacing: 12) {
-                            planItem(title: "One Year", price: "$49.9")
-                            planItem(title: "Six Month", price: "$24.9")
-                            planItem(title: "One Month", price: "$4.9")
+                    if let data = viewModel.priceData {
+                        TabView(selection: $selectedTab) {
+                            VStack(spacing: 12) {
+                                ForEach(data.plan["Pro"] ?? []) { plan in
+                                    planItem(
+                                        title: plan.display,
+                                        price: plan.price.formatVND()
+                                    )
+                                }
+                            }
+                            .tag("Pro")
+                            
+                            VStack(spacing: 12) {
+                                ForEach(data.plan["Premium"] ?? []) { plan in
+                                    planItem(
+                                        title: plan.display,
+                                        price: plan.price.formatVND()
+                                    )
+                                }
+                            }
+                            .tag("Premium")
                         }
-                        .tag("Pro")
-                        
-                        VStack(spacing: 12) {
-                            planItem(title: "One Year", price: "$99.9")
-                            planItem(title: "Six Month", price: "$49.9")
-                            planItem(title: "One Month", price: "$9.9")
-                        }
-                        .tag("Premium")
+                        .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                        .frame(height: 260)
+                        .animation(.easeInOut, value: selectedTab)
+                        .transition(.slide)
+                    } else if let error = viewModel.error {
+                        Text(error)
+                            .foregroundColor(.red)
+                            .padding()
                     }
-                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-                    .frame(height: 260)
-                    .animation(.easeInOut, value: selectedTab)
-                    .transition(.slide)
                 }
                 .padding()
                 .background(Color.white)
@@ -116,7 +129,7 @@ struct SubscriptionSheet: View {
                             .foregroundColor(.black)
                             .frame(width: 100, alignment: .leading)
                         Spacer()
-                        Text("Freemium")
+                        Text("Free")
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(.black)
                         Spacer()
@@ -136,15 +149,13 @@ struct SubscriptionSheet: View {
                     
                     Spacer()
                     
-                    Button(action: {
-                        
-                    }) {
+                    Button(action: {}) {
                         VStack(spacing: 4) {
                             Text("Subscription")
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.white)
                             
-                            Text("Plan auto-renews for $24.99/year until canceled")
+                            Text("Plan auto-renews until canceled")
                                 .font(.caption)
                                 .foregroundColor(.white.opacity(0.8))
                         }
@@ -157,6 +168,13 @@ struct SubscriptionSheet: View {
                 }
                 .padding(.top, 24)
                 .padding(.horizontal, 24)
+            }
+        }
+        .task {
+            await viewModel.fetchPrices(version: "vi")
+            if let data = viewModel.priceData,
+               let firstPlan = data.plan[selectedTab]?.first {
+                selectedPlan = firstPlan.display
             }
         }
     }
@@ -208,5 +226,16 @@ struct SubscriptionSheet: View {
             }
         }
         .padding(.vertical, 2)
+    }
+}
+
+extension Double {
+    func formatVND() -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencySymbol = "₫"
+        formatter.maximumFractionDigits = 0
+        formatter.locale = Locale(identifier: "vi_VN")
+        return formatter.string(from: NSNumber(value: self)) ?? "\(self)"
     }
 }

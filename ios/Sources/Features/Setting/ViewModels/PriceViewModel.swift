@@ -13,8 +13,9 @@ final class PriceViewModel: ObservableObject {
         defer { isLoading = false }
 
         do {
-            let response = try await PriceService.shared.getPrices(version: version)
-            priceData = response.data
+            let response = try await PriceService.shared.fetchPrices(version: version)
+            print("✅ [PriceViewModel] Raw PriceResponse: \(response)")
+            priceData = response
         } catch {
             self.error = "Failed to fetch prices: \(error.localizedDescription)"
         }

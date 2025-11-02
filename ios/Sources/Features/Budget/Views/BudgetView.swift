@@ -3,6 +3,7 @@ import Combine
 
 struct BudgetView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    @EnvironmentObject var transactionViewModel: TransactionViewModel
     @Environment(\.dismiss) var dismiss
     @State private var showCreateNew = false
     @StateObject private var viewModel = BudgetViewModel()
@@ -108,12 +109,9 @@ struct BudgetView: View {
                         VStack(spacing: 8) {
                             ForEach(viewModel.budgets) { budget in
                                 NavigationLink {
-                                    BudgetDetailView(
-                                        budget: budget,
-                                        title: budget.name,
-                                        remain: budget.formattedAmount(using: userCurrency)
-                                    )
-                                    .environmentObject(authViewModel)
+                                    BudgetDetailView(budget: budget)
+                                        .environmentObject(authViewModel)
+                                        .environmentObject(transactionViewModel)
                                 } label: {
                                     BudgetItem(
                                         title: budget.name,

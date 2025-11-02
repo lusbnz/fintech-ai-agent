@@ -56,7 +56,7 @@ struct SettingView: View {
                             Text("Subscription")
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.white)
-                            Text("Seven Days Free, Then $49.9 per Year")
+                            Text("Plan auto-renews until canceled")
                                 .font(.caption)
                                 .foregroundColor(.white.opacity(0.8))
                         }

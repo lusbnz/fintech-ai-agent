@@ -11,10 +11,15 @@ struct Budget: Codable, Identifiable {
     let period: String
     let created_at: String
     let updated_at: String
+    let days_remaining: Double
+    let diff_avg: Double
+    let progress: Double
+    let total_income: Double
+    let total_outcome: Double
     
     enum CodingKeys: String, CodingKey {
         case id = "_id"
-        case name, user_id, amount, start_date, remain, limit, period, created_at, updated_at
+        case name, user_id, amount, start_date, remain, limit, period, created_at, updated_at, days_remaining, diff_avg, progress, total_income, total_outcome
     }
 }
 
@@ -32,7 +37,7 @@ extension Budget {
     func formattedAmount(using currencyCode: String?) -> String {
         let code = (currencyCode ?? "USD").uppercased()
         
-        return amount.formatted(
+        return remain.formatted(
             .currency(code: code)
                 .locale(Locale(identifier: code == "VND" ? "vi_VN" : "en_US"))
         )

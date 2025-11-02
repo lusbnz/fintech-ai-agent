@@ -2,37 +2,30 @@ import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    @EnvironmentObject var transactionVM: TransactionViewModel
+    @EnvironmentObject var budgetViewModel: BudgetViewModel
     @State private var showCreateNew = false
     @State private var showQRScanner = false
     @State private var scannedCode: String?
     
-    @State private var selectedBudget: String = "All"
-    let budgets = ["All", "Income", "Outgoing"]
+    @State private var selectedType: String = "All"
+    let types = ["All", "Income", "Outgoing"]
     
-    var groupedTransactions: [String: [Transaction]] = [
-        "Today": [
-            Transaction(
-                title: "Shopping",
-                amount: "-20,000 VNĐ",
-                time: "14:30",
-                place: "Trung Yên",
-                attachments: 1,
-                categoryIcon: "bag.fill",
-                categoryColor: .orange
-            )
-        ],
-        "Fri, Aug 30": [
-            Transaction(
-                title: "Groceries",
-                amount: "-120,000 VNĐ",
-                time: "16:00",
-                place: "Vinmart",
-                attachments: 2,
-                categoryIcon: "cart.fill",
-                categoryColor: .green
-            )
-        ]
-    ]
+    private var latestTransactions: [Transaction] {
+        var filtered = transactionVM.transactions
+
+        switch selectedType {
+        case "Income":
+            filtered = filtered.filter { $0.type.lowercased() == "income" }
+        case "Outgoing":
+            filtered = filtered.filter { $0.type.lowercased() == "outcome" || $0.type.lowercased() == "expense" }
+        default:
+            break
+        }
+
+        return filtered.sorted { ($0.date_time) > ($1.date_time) }.prefix(5).map { $0 }
+    }
+
     
     private func sortDates(_ d1: String, _ d2: String) -> Bool {
         if d1 == "Today" { return true }
@@ -69,26 +62,25 @@ struct HomeView: View {
                         Spacer()
                         
                         HStack(spacing: 12) {
-                            Button(action: {
-                                showQRScanner = true
-                            }) {
-                                Image(systemName: "qrcode.viewfinder")
-                                    .font(.system(size: 16))
-                                    .foregroundColor(.black)
-                                    .padding(6)
-                                    .background(Color.white)
-                                    .clipShape(Circle())
-                                    .shadow(radius: 2)
-                            }
-                            .fullScreenCover(isPresented: $showQRScanner) {
-                                QRCodeScannerView { result in
-                                    scannedCode = result
-                                    showQRScanner = false
-                                    print("Scanned QR Code:", result)
-                                }
-                                .ignoresSafeArea()
-                            }
-
+//                            Button(action: {
+//                                showQRScanner = true
+//                            }) {
+//                                Image(systemName: "qrcode.viewfinder")
+//                                    .font(.system(size: 16))
+//                                    .foregroundColor(.black)
+//                                    .padding(6)
+//                                    .background(Color.white)
+//                                    .clipShape(Circle())
+//                                    .shadow(radius: 2)
+//                            }
+//                            .fullScreenCover(isPresented: $showQRScanner) {
+//                                QRCodeScannerView { result in
+//                                    scannedCode = result
+//                                    showQRScanner = false
+//                                    print("Scanned QR Code:", result)
+//                                }
+//                                .ignoresSafeArea()
+//                            }
                             
                             NavigationLink {
                                 SettingView(authViewModel: authViewModel)
@@ -105,91 +97,93 @@ struct HomeView: View {
                     }
                     .padding(.horizontal)
                     
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Budget Shopping")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.black)
-                        
-                        Text("$68.70")
-                            .font(.system(size: 32, weight: .bold))
-                            .foregroundColor(.black)
-                        
-                        Text("Left to spend of $500 limit")
-                            .font(.system(size: 14))
-                            .foregroundColor(.black)
-                        
-                        HStack {
-                            Text("1 day to go")
-                                .font(.system(size: 12))
+                    if let budget = budgetViewModel.budgets.first {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(budget.name)
+                                .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.black)
-                            Spacer()
-                            Text("$233.00 saved")
-                                .font(.system(size: 12))
-                                .foregroundColor(.black)
-                        }
-                        
-                        ZStack(alignment: .leading) {
-                            Capsule()
-                                .fill(Color.gray.opacity(0.2))
-                                .frame(height: 6)
-                            Capsule()
-                                .fill(Color.blue)
-                                .frame(width: 180, height: 6)
-                        }
-                        
-                        HStack(spacing: 8) {
-                            VStack(alignment: .leading) {
-                                Text("$567.00")
-                                    .font(.system(size: 20, weight: .semibold))
-                                    .foregroundColor(.black)
-                                Text("Incoming")
-                                    .font(.system(size: 10))
-                                    .foregroundColor(.gray)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal)
-                            .padding(.vertical, 12)
-                            .background(Color.gray.opacity(0.2))
-                            .cornerRadius(16)
                             
-                            VStack(alignment: .leading) {
-                                Text("$234.00")
-                                    .font(.system(size: 20, weight: .semibold))
+                            Text("\(Int(budget.remain).formattedWithSeparator) VNĐ")
+                                .font(.system(size: 32, weight: .bold))
+                                .foregroundColor(.black)
+                            
+                            Text("Left to spend of \(Int(budget.limit).formattedWithSeparator) VNĐ limit")
+                                .font(.system(size: 14))
+                                .foregroundColor(.black)
+                            
+                            HStack {
+                                Text("\(Int(budget.days_remaining)) days to go")
+                                    .font(.system(size: 12))
                                     .foregroundColor(.black)
-                                Text("Outgoing")
-                                    .font(.system(size: 10))
-                                    .foregroundColor(.gray)
+                                Spacer()
+                                Text("\(Int(-budget.diff_avg).formattedWithSeparator) saved")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.black)
                             }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal)
-                            .padding(.vertical, 12)
-                            .background(Color.gray.opacity(0.2))
-                            .cornerRadius(16)
+                            
+                            ZStack(alignment: .leading) {
+                                Capsule()
+                                    .fill(Color.gray.opacity(0.2))
+                                    .frame(height: 6)
+                                Capsule()
+                                    .fill(Color.blue)
+                                    .frame(width: CGFloat(budget.progress) * 200, height: 6)
+                            }
+                            
+                            HStack(spacing: 8) {
+                                VStack(alignment: .leading) {
+                                    Text("\(Int(budget.total_income).formattedWithSeparator) VNĐ")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(.black)
+                                    Text("Incoming")
+                                        .font(.system(size: 10))
+                                        .foregroundColor(.gray)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal)
+                                .padding(.vertical, 12)
+                                .background(Color.gray.opacity(0.2))
+                                .cornerRadius(16)
+                                
+                                VStack(alignment: .leading) {
+                                    Text("\(Int(budget.total_outcome).formattedWithSeparator) VNĐ")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(.black)
+                                    Text("Outgoing")
+                                        .font(.system(size: 10))
+                                        .foregroundColor(.gray)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal)
+                                .padding(.vertical, 12)
+                                .background(Color.gray.opacity(0.2))
+                                .cornerRadius(16)
+                            }
                         }
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(24)
+                        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+                        .padding(.horizontal)
                     }
-                    .padding()
-                    .background(Color.white)
-                    .cornerRadius(24)
-                    .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
-                    .padding(.horizontal)
                     
                     HStack(alignment: .center) {
-                        FlexibleView(data: budgets) { tag in
+                        FlexibleView(data: types) { tag in
                             Button {
                                 withAnimation(.easeInOut(duration: 0.15)) {
-                                    selectedBudget = tag
+                                    selectedType = tag
                                 }
                             } label: {
                                 Text(tag)
                                     .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(selectedBudget == tag ? .black : .gray)
+                                    .foregroundColor(selectedType == tag ? .black : .gray)
                                     .padding(.vertical, 8)
                                     .padding(.horizontal, 16)
                                     .background(
                                         RoundedRectangle(cornerRadius: 16)
-                                            .fill(selectedBudget == tag ? Color.white : Color.gray.opacity(0.2))
+                                            .fill(selectedType == tag ? Color.white : Color.gray.opacity(0.2))
                                     )
-                                    .shadow(color: selectedBudget == tag ? Color.white.opacity(0.3) : .clear, radius: 4, x: 0, y: 2)
+                                    .shadow(color: selectedType == tag ? Color.white.opacity(0.3) : .clear, radius: 4, x: 0, y: 2)
                             }
                         }
                    }
@@ -205,65 +199,34 @@ struct HomeView: View {
                             Spacer()
                         }
                         .padding(.horizontal)
-                        
-                        ForEach(groupedTransactions.keys.sorted(by: sortDates), id: \.self) { key in
-                            VStack(alignment: .leading, spacing: 12) {
-                                HStack {
-                                    Text(key)
-                                        .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(.gray)
-                                    
-                                    Spacer()
-                    
-                                    if let transactions = groupedTransactions[key], !transactions.isEmpty {
-                                        HStack(spacing: 12) {
-                                            let totalAmount = transactions.reduce(0) { sum, transaction in
-                                                let amountStr = transaction.amount.replacingOccurrences(of: "[^0-9-]", with: "", options: .regularExpression)
-                                                return sum + (Int(amountStr) ?? 0)
-                                            }
-                                            Text("\(totalAmount.formattedWithSeparator) VNĐ")
-                                                .font(.system(size: 10, weight: .semibold))
-                                                .foregroundColor(.white)
-                                                .padding(.horizontal, 8)
-                                                .padding(.vertical, 4)
-                                                .background(totalAmount < 0 ? Color.red : Color.green)
-                                                .cornerRadius(8)
-                                            
-                                            Button(action: { showCreateNew = true }) {
-                                                Image(systemName: "plus.circle")
-                                                    .font(.system(size: 20))
-                                                    .foregroundColor(.gray)
-                                            }
-                                        }
+                     
+                        if latestTransactions.isEmpty {
+                            Text("No transactions found")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.gray)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .padding(.vertical, 16)
+                        } else {
+                            VStack(spacing: 8) {
+                                ForEach(latestTransactions) { tx in
+                                    NavigationLink(destination: TransactionDetailView(transaction: tx)) {
+                                        TransactionItem(
+                                            title: tx.name,
+                                            remain: tx.type == "outcome"
+                                                ? "-\(Int(abs(tx.amount)).formattedWithSeparator) VNĐ"
+                                                : "+\(Int(tx.amount).formattedWithSeparator) VNĐ",
+                                            time: tx.formattedDate,
+                                            place: (tx.location?.name.isEmpty == false ? tx.location!.name : "Unknown"),
+                                            attachments: tx.image != nil ? 1 : 0,
+                                            categoryColor: tx.type == "income" ? .green : .red,
+                                            categoryIcon: tx.type == "income" ? "arrow.down.circle.fill" : "arrow.up.circle.fill"
+                                        )
                                     }
+                                    .buttonStyle(PlainButtonStyle())
                                 }
-                                .padding(.horizontal)
-                                
-                                VStack(spacing: 8) {
-                                    ForEach(groupedTransactions[key] ?? []) { transaction in
-                                        NavigationLink(destination: TransactionDetailView(transaction: transaction)) {
-                                            TransactionItem(
-                                                title: transaction.title,
-                                                remain: transaction.amount,
-                                                time: transaction.time,
-                                                place: transaction.place,
-                                                attachments: transaction.attachments,
-                                                categoryColor: transaction.categoryColor,
-                                                categoryIcon: transaction.categoryIcon
-                                            )
-                                        }
-                                        .buttonStyle(PlainButtonStyle())
-                                    }
-                                }
-                                .padding(.horizontal)
                             }
+                            .padding(.horizontal)
                         }
-                        
-                        Text("No more transactions")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(.gray)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .padding(.vertical, 16)
                     }
                     .padding(.bottom, 40)
                     .padding(.top, 20)
@@ -276,5 +239,24 @@ struct HomeView: View {
                 CreateTransactionView()
             }
         }
+        .task {
+            await budgetViewModel.loadBudgets()
+            await transactionVM.refresh()
+        }
     }
+}
+
+extension Numeric {
+    var formattedWithSeparator: String {
+        Formatter.withSeparator.string(for: self) ?? ""
+    }
+}
+
+extension Formatter {
+    static let withSeparator: NumberFormatter = {
+        let formatter = NumberFormatter()
+        formatter.groupingSeparator = "."
+        formatter.numberStyle = .decimal
+        return formatter
+    }()
 }

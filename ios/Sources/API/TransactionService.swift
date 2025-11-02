@@ -1,37 +1,40 @@
 import Foundation
+import UIKit
 
 final class TransactionService {
     static let shared = TransactionService()
     private init() {}
     
-    // MARK: - Get Transactions (with pagination + filter)
     func getTransactions(page: Int = 1, filter: TransactionFilter? = nil) async throws -> TransactionListResponse {
         let endpoint = Endpoint.transactionList(page: page, filter: filter)
-        let response: TransactionListResponse = try await APIClient.shared.request(
+        
+        let response: APIResponse<TransactionListResponse> = try await APIClient.shared.request(
             endpoint,
-            as: TransactionListResponse.self
+            as: APIResponse<TransactionListResponse>.self
         )
-        return response
+        
+        return response.data
     }
     
-    // MARK: - Create Transaction
     func createTransaction(
+        name: String,
         amount: Double,
         category: String,
         note: String? = nil,
-        date: String, // ISO: "2025-04-05"
-        type: String, // "income" | "expense"
+        date: String,
+        type: String, // "income" | "outcome"
         budget_id: String? = nil,
-        image_url: String? = nil
+        image: String? = nil
     ) async throws -> Transaction {
         let body: [String: Any] = [
+            "name": name,
             "amount": amount,
             "category": category,
-            "note": note ?? NSNull(),
-            "date": date,
+            "description": note ?? NSNull(),
+            "date_time": date,
             "type": type,
             "budget_id": budget_id ?? NSNull(),
-            "image_url": image_url ?? NSNull()
+            "image": image ?? NSNull()
         ].compactMapValues { $0 is NSNull ? nil : $0 }
         
         let response: APIResponse<Transaction> = try await APIClient.shared.request(
@@ -42,29 +45,29 @@ final class TransactionService {
         return response.data
     }
     
-    // MARK: - Update Transaction
     func updateTransaction(
         id: String,
+        name: String,
         amount: Double? = nil,
         category: String? = nil,
         note: String? = nil,
         date: String? = nil,
         type: String? = nil,
         budget_id: String? = nil,
-        image_url: String? = nil
+        image: String? = nil
     ) async throws -> Transaction {
         var body: [String: Any] = [:]
+        body["name"] = name
         if let amount = amount { body["amount"] = amount }
         if let category = category { body["category"] = category }
-        if let note = note { body["note"] = note }
-        if let date = date { body["date"] = date }
+        if let note = note { body["description"] = note }
+        if let date = date { body["date_time"] = date }
         if let type = type { body["type"] = type }
         if let budget_id = budget_id { body["budget_id"] = budget_id }
-        if let image_url = image_url { body["image_url"] = image_url }
-        
-        // Only send non-null optional fields
+        if let image = image { body["image"] = image }
+
         let cleanBody = body.compactMapValues { $0 is NSNull ? nil : $0 }
-        
+
         let response: APIResponse<Transaction> = try await APIClient.shared.request(
             .transactionUpdate(id: id, body: cleanBody),
             body: cleanBody,
@@ -72,12 +75,37 @@ final class TransactionService {
         )
         return response.data
     }
+
     
-    // MARK: - Delete Transaction
     func deleteTransaction(id: String) async throws {
         _ = try await APIClient.shared.request(
             .transactionDelete(id: id),
             as: APIResponse<EmptyResponse>.self
         )
+    }
+    
+    func uploadImage(_ image: UIImage) async throws -> String {
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+            throw NSError(domain: "UploadError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid image data"])
+        }
+        
+        let request = try Endpoint.uploadImage.makeRequest(imageData: imageData)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
+            throw NSError(domain: "UploadError", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to upload image"])
+        }
+        
+        struct UploadResponse: Codable {
+            let status: Int
+            let data: UploadData
+        }
+        
+        struct UploadData: Codable {
+            let url: String
+        }
+        
+        let decoded = try JSONDecoder().decode(UploadResponse.self, from: data)
+        return decoded.data.url
     }
 }

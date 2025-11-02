@@ -9,7 +9,6 @@ final class TransactionViewModel: ObservableObject {
     @Published var hasMorePages = true
     @Published var currentPage = 1
     
-    // Lọc theo budget (nếu có)
     @Published var selectedBudgetId: String? = nil {
         didSet {
             resetAndReload()
@@ -17,10 +16,9 @@ final class TransactionViewModel: ObservableObject {
     }
     
     private var cancellables = Set<AnyCancellable>()
-    private let pageSize = 20 // Có thể điều chỉnh
+    private let pageSize = 20
     
     init() {
-        // Tự động reload khi selectedBudgetId thay đổi
         $selectedBudgetId
             .dropFirst()
             .sink { [weak self] _ in
@@ -29,45 +27,47 @@ final class TransactionViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
-    // MARK: - Load Transactions
     func loadTransactions(page: Int = 1, append: Bool = false) async {
         guard !isLoading else { return }
-        
         isLoading = true
         error = nil
         defer { isLoading = false }
-        
+
         let filter: TransactionFilter? = selectedBudgetId.map { TransactionFilter(budgetId: $0) }
-        
+
         do {
-            let response = try await TransactionService.shared.getTransactions(
-                page: page,
-                filter: filter
-            )
+            let response = try await TransactionService.shared.getTransactions(page: page, filter: filter)
             
-            let newTransactions = response.data
+            if Task.isCancelled { return }
             
             if append {
-                transactions.append(contentsOf: newTransactions)
+                transactions.append(contentsOf: response.data)
             } else {
-                transactions = newTransactions
+                transactions = response.data
             }
             
-            hasMorePages = newTransactions.count == pageSize
-            currentPage = page
-            
+            hasMorePages = response.pagination.page < response.pagination.total_page
+            currentPage = response.pagination.page
+
         } catch {
-            self.error = "Failed to load transactions: \(error.localizedDescription)"
-            print("Transaction load error: \(error)")
+            if let urlError = error as? URLError, urlError.code == .cancelled {
+                print("⚠️ Request was cancelled — ignore safely")
+                return
+            }
+
+            if error is CancellationError {
+                print("⚠️ Task cancelled — ignore safely")
+                return
+            }
+
+            self.error = "Failed to load: \(error.localizedDescription)"
         }
     }
     
-    // MARK: - Pull to Refresh / Initial Load
     func refresh() async {
         await loadTransactions(page: 1, append: false)
     }
     
-    // MARK: - Load More (Infinite Scroll)
     func loadMoreIfNeeded(currentTransaction: Transaction) async {
         guard hasMorePages,
               let lastTransaction = transactions.last,
@@ -78,7 +78,6 @@ final class TransactionViewModel: ObservableObject {
         await loadTransactions(page: currentPage + 1, append: true)
     }
     
-    // MARK: - Reset & Reload
     private func resetAndReload() {
         transactions = []
         hasMorePages = true
@@ -86,15 +85,15 @@ final class TransactionViewModel: ObservableObject {
         Task { await refresh() }
     }
     
-    // MARK: - Create Transaction
     func createTransaction(
+        name: String,
         amount: Double,
         category: String,
         note: String?,
         date: Date,
         type: String,
         budget_id: String?,
-        image_url: String? = nil
+        image: String? = nil
     ) async -> Bool {
         isLoading = true
         error = nil
@@ -104,13 +103,14 @@ final class TransactionViewModel: ObservableObject {
         
         do {
             let newTx = try await TransactionService.shared.createTransaction(
+                name: name,
                 amount: amount,
                 category: category,
                 note: note,
                 date: isoDate,
                 type: type,
                 budget_id: budget_id,
-                image_url: image_url
+                image: image
             )
             
             // Thêm vào đầu danh sách nếu cùng budget (hoặc All)
@@ -125,16 +125,16 @@ final class TransactionViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Update Transaction
     func updateTransaction(
         id: String,
+        name: String,
         amount: Double? = nil,
         category: String? = nil,
         note: String? = nil,
         date: Date? = nil,
         type: String? = nil,
         budget_id: String? = nil,
-        image_url: String? = nil
+        image: String? = nil
     ) async -> Bool {
         isLoading = true
         error = nil
@@ -145,20 +145,19 @@ final class TransactionViewModel: ObservableObject {
         do {
             let updatedTx = try await TransactionService.shared.updateTransaction(
                 id: id,
+                name: name,
                 amount: amount,
                 category: category,
                 note: note,
                 date: isoDate,
                 type: type,
                 budget_id: budget_id,
-                image_url: image_url
+                image: image
             )
             
-            // Cập nhật trong danh sách
             if let index = transactions.firstIndex(where: { $0.id == id }) {
                 transactions[index] = updatedTx
                 
-                // Nếu đổi budget → có thể cần loại bỏ nếu không còn phù hợp
                 if let budget_id = budget_id, selectedBudgetId != nil, budget_id != selectedBudgetId {
                     transactions.remove(at: index)
                 }
@@ -171,7 +170,6 @@ final class TransactionViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Delete Transaction
     func deleteTransaction(_ transaction: Transaction) async -> Bool {
         isLoading = true
         error = nil
@@ -180,7 +178,6 @@ final class TransactionViewModel: ObservableObject {
         do {
             try await TransactionService.shared.deleteTransaction(id: transaction.id)
             
-            // Xóa khỏi danh sách
             transactions.removeAll { $0.id == transaction.id }
             return true
         } catch {

@@ -32,8 +32,8 @@ final class BudgetService {
         var body: [String: Any] = [:]
         if let name = name { body["name"] = name }
         if let amount = amount { body["amount"] = amount }
-//        if let start_date = startDate { body["start_date"] = start_date }
-//        if let period = period { body["period"] = period }
+        if let start_date = start_date { body["start_date"] = start_date }
+        if let period = period { body["period"] = period }
         
         let response: APIResponse<Budget> = try await APIClient.shared.request(
             .budgetUpdate(id: id),

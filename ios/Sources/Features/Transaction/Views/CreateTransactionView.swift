@@ -4,22 +4,22 @@ struct CreateTransactionView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var authViewModel: AuthViewModel
     
-//    @StateObject private var vm = TransactionViewModel()
+    @StateObject private var transactionVM = TransactionViewModel()
     @StateObject private var budgetVM = BudgetViewModel()
     
-    // MARK: - Edit Mode
     let transactionToEdit: Transaction?
     let onSuccess: (() -> Void)?
+    let defaultBudgetId: String?
     
-    init(transaction: Transaction? = nil, onSuccess: (() -> Void)? = nil) {
+    init(transaction: Transaction? = nil, defaultBudgetId: String? = nil, onSuccess: (() -> Void)? = nil) {
         self.transactionToEdit = transaction
         self.onSuccess = onSuccess
+        self.defaultBudgetId = defaultBudgetId
     }
     
-    // MARK: - States
+    @State private var transactionName: String = ""
     @State private var amount: String = ""
     @State private var dateTime: Date = Date()
-    @State private var transactionName: String = ""
     @State private var selectedBudgetId: String?
     @State private var selectedTypeDisplay: String = "Outcome"
     @State private var description: String = ""
@@ -27,6 +27,9 @@ struct CreateTransactionView: View {
     @State private var selectedImage: UIImage? = nil
     @State private var showImagePicker = false
     @State private var showDescriptionInput = false
+    
+    @State private var showMapSheet = false
+    @State private var selectedLocation: Location? = nil
     
     let categories = ["Food", "Transport", "Shopping", "Entertainment", "Health", "Other"]
     let typeOptions = [("Income", "income"), ("Outcome", "outcome")]
@@ -68,6 +71,7 @@ struct CreateTransactionView: View {
                             if budgetVM.isLoading {
                                 ProgressView()
                                     .scaleEffect(0.8)
+                                    .padding(.vertical)
                             } else if budgetVM.budgets.isEmpty {
                                 Text("No budgets")
                                     .foregroundColor(.red)
@@ -101,10 +105,19 @@ struct CreateTransactionView: View {
                         }
                         
                         infoRow(icon: "mappin.and.ellipse", title: "Location") {
-                            CustomButton(title: "Open Map") {
-                                // TODO: Open map
+                            VStack(alignment: .trailing, spacing: 4) {
+                                CustomButton(title: "Open Map") {
+                                    showMapSheet.toggle()
+                                }
+                                .padding(.vertical)
+
+                                if let location = selectedLocation {
+                                    Text(location.name)
+                                        .font(.system(size: 12))
+                                        .foregroundColor(.gray)
+                                }
                             }
-                            .padding(.vertical)
+                            .padding(.bottom)
                         }
                         
                         infoRow(icon: "tag", title: "Category") {
@@ -185,7 +198,6 @@ struct CreateTransactionView: View {
                 .padding(.horizontal)
             }
             
-            // Gradient overlay
             VStack {
                 Spacer()
                 LinearGradient(
@@ -202,16 +214,13 @@ struct CreateTransactionView: View {
             }
             .ignoresSafeArea(edges: .bottom)
             
-            // Save Button
             VStack {
                 Button(action: {
-//                    action: saveTransaction
-                    print("Save")
+                    saveTransaction()
                 }) {
                     ZStack(alignment: .leading) {
                         Text(
-//                            vm.isLoading ? "Saving..." : (transactionToEdit != nil ? "Update" : "Create")
-                            "Create"
+                            transactionVM.isLoading ? "Saving..." : (transactionToEdit != nil ? "Update" : "Create")
                         )
                             .font(.system(size: 14))
                             .fontWeight(.medium)
@@ -221,21 +230,21 @@ struct CreateTransactionView: View {
                             .background(
                                 RoundedRectangle(cornerRadius: 32)
                                     .fill(Color.black.opacity(0.75))
-//                                    .fill(vm.isLoading ? Color.gray : Color.black.opacity(0.75))
+                                    .fill(transactionVM.isLoading ? Color.gray : Color.black.opacity(0.75))
                             )
                             .opacity(1.0)
-//                            .opacity(vm.isLoading ? 0.7 : 1.0)
+                            .opacity(transactionVM.isLoading ? 0.7 : 1.0)
                         
                         Image(systemName: "arrow.right")
                             .font(.system(size: 20, weight: .medium))
                             .foregroundColor(.white)
                             .frame(width: 42, height: 42)
                             .background(Circle().fill(Color.black))
-//                            .background(Circle().fill(vm.isLoading ? Color.gray : Color.black))
+                            .background(Circle().fill(transactionVM.isLoading ? Color.gray : Color.black))
                             .frame(maxWidth: .infinity, alignment: .trailing)
                     }
                 }
-//                .disabled(vm.isLoading || !isValid)
+                .disabled(transactionVM.isLoading || !isValid)
                 .padding(.horizontal)
                 .padding(.bottom, 40)
                 .shadow(color: Color.black.opacity(0.2), radius: 6, x: 0, y: 3)
@@ -243,6 +252,9 @@ struct CreateTransactionView: View {
         }
         .sheet(isPresented: $showImagePicker) {
             ImagePicker(image: $selectedImage)
+        }
+        .sheet(isPresented: $showMapSheet) {
+            MapPickerSheet(selectedLocation: $selectedLocation)
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -254,19 +266,25 @@ struct CreateTransactionView: View {
                 }
             }
         }
-//        .alert("Error", isPresented: .constant(vm.error != nil)) {
-//            Button("OK") { vm.error = nil }
-//        } message: {
-//            Text(vm.error ?? "")
-//        }
+        .alert("Error", isPresented: .constant(transactionVM.error != nil)) {
+            Button("OK") { transactionVM.error = nil }
+        } message: {
+            Text(transactionVM.error ?? "")
+        }
         .task {
             await budgetVM.loadBudgets()
+            
+            if let prefill = defaultBudgetId {
+                selectedBudgetId = prefill
+            } else if let firstBudget = budgetVM.budgets.first {
+                selectedBudgetId = firstBudget.id
+            }
         }
-//        .onAppear {
-//            if let transaction = transactionToEdit {
-//                fillData(from: transaction)
-//            }
-//        }
+        .onAppear {
+            if let transaction = transactionToEdit {
+                fillData(from: transaction)
+            }
+        }
     }
     
     private var isValid: Bool {
@@ -276,69 +294,90 @@ struct CreateTransactionView: View {
         selectedBudgetId != nil
     }
     
-//    private func fillData(from transaction: Transaction) {
-//        transactionName = transaction.name
-//        amount = "\(Int(transaction.amount))"
-//        dateTime = transaction.startDate
-//        selectedCategory = transaction.category
-//        description = transaction.description ?? ""
-//        selectedBudgetId = transaction.budget_id
-//        selectedTypeDisplay = transaction.type == "income" ? "Income" : "Outcome"
-//        
-//        if !transaction.image.isEmpty, let url = URL(string: transaction.image) {
-//            Task {
-//                if let (data, _) = try? await URLSession.shared.data(from: url),
-//                   let uiImage = UIImage(data: data) {
-//                    selectedImage = uiImage
-//                }
-//            }
-//        }
-//    }
+    private func fillData(from transaction: Transaction) {
+        transactionName = transaction.name ?? ""
+        
+        amount = "\(Int(transaction.amount))"
+        
+        let dateFormatter = ISO8601DateFormatter()
+        if let parsedDate = dateFormatter.date(from: transaction.date_time) {
+            dateTime = parsedDate
+        } else {
+            dateTime = Date()
+        }
+
+        selectedCategory = transaction.category
+        description = transaction.description ?? ""
+        selectedBudgetId = transaction.budget_id
+        selectedTypeDisplay = transaction.type == "income" ? "Income" : "Outcome"
+        
+        if let imageUrlStr = transaction.image, !imageUrlStr.isEmpty, let url = URL(string: imageUrlStr) {
+            Task {
+                if let (data, _) = try? await URLSession.shared.data(from: url),
+                   let uiImage = UIImage(data: data) {
+                    await MainActor.run {
+                        selectedImage = uiImage
+                    }
+                }
+            }
+        }
+    }
     
-//    private func saveTransaction() {
-//        guard let amountDouble = Double(amount),
-//              let budgetId = selectedBudgetId else { return }
-//        
-//        let typeValue = typeOptions.first { $0.0 == selectedTypeDisplay }?.1 ?? "outcome"
-//        let location = Location(name: "Unknown")
-//        let imageBase64 = selectedImage?.jpegData(compressionQuality: 0.8)?.base64EncodedString() ?? ""
-//        
-//        Task {
-//            let success: Bool
-//            
-//            if let transaction = transactionToEdit {
-//                // UPDATE
-//                success = await vm.updateTransaction(
-//                    id: transaction.id,
-//                    name: transactionName,
-//                    budget_id: budgetId,
-//                    category: selectedCategory,
-//                    amount: amountDouble,
-//                    dateTime: dateTime,
-//                    location: location,
-//                    image: imageBase64,
-//                    type: typeValue,
-//                )
-//            } else {
-//                // CREATE
-//                success = await vm.createTransaction(
-//                    name: transactionName,
-//                    budget_id: budgetId,
-//                    category: selectedCategory,
-//                    amount: amountDouble,
-//                    dateTime: dateTime,
-//                    location: location,
-//                    image: imageBase64,
-//                    type: typeValue
-//                )
-//            }
-//            
-//            if success {
-//                onSuccess?()
-//                dismiss()
-//            }
-//        }
-//    }
+    private func saveTransaction() {
+        guard let amountDouble = Double(amount),
+              let budgetId = selectedBudgetId else { return }
+        
+        let typeValue = typeOptions.first { $0.0 == selectedTypeDisplay }?.1 ?? "outcome"
+        let dateFormatter = ISO8601DateFormatter()
+        let isoDate = dateFormatter.string(from: dateTime)
+        
+        Task {
+            do {
+                var imageUrl: String? = nil
+                
+                if let selectedImage = selectedImage {
+                    imageUrl = try await TransactionService.shared.uploadImage(selectedImage)
+                    print("Uploaded image URL: \(imageUrl ?? "")")
+                }
+                
+                let success: Bool
+                
+                if let transaction = transactionToEdit {
+                    _ = try await TransactionService.shared.updateTransaction(
+                        id: transaction.id,
+                        name: transactionName,
+                        amount: amountDouble,
+                        category: selectedCategory,
+                        note: description,
+                        date: isoDate,
+                        type: typeValue,
+                        budget_id: budgetId,
+                        image: imageUrl
+                    )
+                    success = true
+                } else {
+                    _ = try await TransactionService.shared.createTransaction(
+                        name: transactionName,
+                        amount: amountDouble,
+                        category: selectedCategory,
+                        note: description,
+                        date: isoDate,
+                        type: typeValue,
+                        budget_id: budgetId,
+                        image: imageUrl
+                    )
+                    success = true
+                }
+                
+                if success {
+                    onSuccess?()
+                    dismiss()
+                }
+            } catch {
+                print("❌ Error saving transaction:", error)
+            }
+        }
+    }
     
     private func infoRow<Content: View>(
         icon: String,
@@ -363,7 +402,6 @@ struct CreateTransactionView: View {
     }
 }
 
-// MARK: - Custom Button
 struct CustomButton: View {
     let title: String
     let action: () -> Void
@@ -383,7 +421,6 @@ struct CustomButton: View {
     }
 }
 
-// MARK: - Image Picker
 struct ImagePicker: UIViewControllerRepresentable {
     @Binding var image: UIImage?
     

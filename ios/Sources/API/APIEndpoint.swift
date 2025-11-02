@@ -11,6 +11,12 @@ enum Endpoint {
     case budgetCreate
     case budgetUpdate(id: String)
     case budgetDelete(id: String)
+    case transactionList(page: Int, filter: TransactionFilter?)
+    case transactionCreate(body: [String: Any])
+    case transactionUpdate(id: String, body: [String: Any])
+    case transactionDelete(id: String)
+    case uploadImage
+    case getPrices(version: String)
 
     var url: URL {
         switch self {
@@ -30,6 +36,18 @@ enum Endpoint {
             return URL(string: Endpoint.baseURL + "/budgets/\(id)")!
         case .budgetDelete(let id):
             return URL(string: Endpoint.baseURL + "/budgets/\(id)")!
+        case .transactionList:
+            return URL(string: Endpoint.baseURL + "/transactions/list")!
+        case .transactionCreate:
+            return URL(string: Endpoint.baseURL + "/transactions/create")!
+        case .transactionUpdate(let id):
+            return URL(string: Endpoint.baseURL + "/transactions/\(id)")!
+        case .transactionDelete(let id):
+            return URL(string: Endpoint.baseURL + "/transactions/\(id)")!
+        case .uploadImage:
+            return URL(string: Endpoint.baseURL + "/upload/image")!
+        case .getPrices:
+            return URL(string: Endpoint.baseURL + "/prices")!
         }
     }
 
@@ -49,10 +67,20 @@ enum Endpoint {
             return "PUT"
         case .budgetDelete: 
             return "DELETE"
+        case .transactionList, .transactionCreate:
+            return "POST"
+        case .transactionUpdate:
+            return "PUT"
+        case .transactionDelete:
+            return "DELETE"
+        case .uploadImage:
+            return "POST"
+        case .getPrices:
+            return "GET"
         }
     }
 
-    func makeRequest() throws -> URLRequest {
+    func makeRequest(imageData: Data? = nil) throws -> URLRequest {
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -88,6 +116,53 @@ enum Endpoint {
 
             case .budgetDelete(let id):
                 request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
+            
+            case .transactionList(let page, let filter):
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                var json: [String: Any] = ["page": page]
+                if let filter = filter, !filter.toJSON().isEmpty {
+                    json["filter"] = filter.toJSON()
+                }
+                request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
+                request.httpBody = try JSONSerialization.data(withJSONObject: json)
+                
+            case .transactionCreate(let body):
+                request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
+                request.httpBody = try JSONSerialization.data(withJSONObject: body)
+            
+            case .transactionUpdate(_, let body):
+                request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
+                request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+            case .transactionDelete(let id):
+                request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
+            
+            case .uploadImage:
+                let boundary = "Boundary-\(UUID().uuidString)"
+                request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+
+                if let token = TokenManager.shared.accessToken {
+                    request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                }
+
+                guard let imageData = imageData else {
+                    throw NSError(domain: "UploadError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Image data is required"])
+                }
+
+                var body = Data()
+
+                body.append("--\(boundary)\r\n".data(using: .utf8)!)
+                body.append("Content-Disposition: form-data; name=\"image\"; filename=\"image.jpg\"\r\n".data(using: .utf8)!)
+                body.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+                body.append(imageData)
+                body.append("\r\n".data(using: .utf8)!)
+                body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+
+                request.httpBody = body
+            case .getPrices:
+                if let token = TokenManager.shared.accessToken {
+                    request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                }
         }
 
         return request
