@@ -26,20 +26,14 @@ struct WrapperView: View {
                     }
                     .tag(Tabs.transaction)
             
-//                Color.clear
-//                    .tabItem {
-//                        Label("Chat", systemImage: "bubbles.and.sparkles")
-//                    }
-//                    .tag(Tabs.chat)
-//                    .onAppear {
-//                        showChatView = true
-//                    }
-                
-//                ChallengeView()
-//                    .tabItem {
-//                        Label("Challenge", systemImage: "paperplane")
-//                    }
-//                    .tag(Tabs.challenge)
+                Color.clear
+                    .tabItem {
+                        Label("Chat", systemImage: "bubbles.and.sparkles")
+                    }
+                    .tag(Tabs.chat)
+                    .onAppear {
+                        showChatView = true
+                    }
             }
             .tabBarMinimizeBehavior(.onScrollDown)
             

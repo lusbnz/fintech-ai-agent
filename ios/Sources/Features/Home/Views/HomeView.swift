@@ -97,7 +97,23 @@ struct HomeView: View {
                     }
                     .padding(.horizontal)
                     
-                    if let budget = budgetViewModel.budgets.first {
+                    if budgetViewModel.isLoading {
+                        VStack(alignment: .leading, spacing: 12) {
+                            SkeletonView(width: 120, height: 18)
+                            SkeletonView(width: 180, height: 28)
+                            SkeletonView(width: 220, height: 14)
+                            SkeletonView(width: .infinity, height: 8)
+                            HStack {
+                                SkeletonView(width: 100, height: 32)
+                                SkeletonView(width: 100, height: 32)
+                            }
+                        }
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(24)
+                        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+                        .padding(.horizontal)
+                    } else if let budget = budgetViewModel.budgets.first {
                         VStack(alignment: .leading, spacing: 12) {
                             Text(budget.name)
                                 .font(.system(size: 16, weight: .semibold))

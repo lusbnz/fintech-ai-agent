@@ -64,7 +64,8 @@ struct TransactionDetailView: View {
                     timelineRow(
                         icon: transaction.type == "income" ? "arrow.down.circle.fill" : "arrow.up.circle.fill",
                         title: transaction.type == "income" ? "Thu nhập" : "Chi tiêu",
-                        value: transaction.type == "income" ? "+\(formattedAmount)" : "-\(formattedAmount)"
+                        value: transaction.type == "income" ? "+\(formattedAmount)" : "-\(formattedAmount)",
+                        isNoLine: transaction.image == nil
                     )
                     .foregroundColor(transaction.type == "income" ? .green : .red)
                     
@@ -119,16 +120,18 @@ struct TransactionDetailView: View {
     }
     
     // MARK: - UI components
-    func timelineRow(icon: String, title: String, value: String? = nil) -> some View {
+    func timelineRow(icon: String, title: String, value: String? = nil, isNoLine: Bool? = false) -> some View {
         HStack(alignment: .top, spacing: 12) {
             VStack {
                 iconCircle(content: .icon(icon))
-                Rectangle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 1)
-                    .frame(maxHeight: .infinity)
-                    .padding(.top, -4)
-                    .padding(.bottom, -20)
+                if !(isNoLine ?? false) {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                        .frame(width: 1)
+                        .frame(maxHeight: .infinity)
+                        .padding(.top, -4)
+                        .padding(.bottom, -20)
+                }
             }
             
             VStack(alignment: .leading, spacing: 2) {
@@ -150,12 +153,12 @@ struct TransactionDetailView: View {
         HStack(alignment: .top, spacing: 12) {
             VStack {
                 iconCircle(content: .icon(icon))
-                Rectangle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 1)
-                    .frame(maxHeight: .infinity)
-                    .padding(.top, -4)
-                    .padding(.bottom, -20)
+//                Rectangle()
+//                    .fill(Color.gray.opacity(0.3))
+//                    .frame(width: 1)
+//                    .frame(maxHeight: .infinity)
+//                    .padding(.top, -4)
+//                    .padding(.bottom, -20)
             }
             
             VStack(alignment: .leading, spacing: 6) {

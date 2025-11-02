@@ -5,8 +5,6 @@ struct SkeletonView: View {
     var height: CGFloat = 16
     var cornerRadius: CGFloat = 6
     
-    @State private var isAnimating = false
-    
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: cornerRadius)
@@ -27,10 +25,7 @@ struct SkeletonView: View {
                     RoundedRectangle(cornerRadius: cornerRadius)
                         .fill(Color.white)
                 )
-                .offset(x: isAnimating ? 150 : -150)
-                .animation(Animation.linear(duration: 1.2).repeatForever(autoreverses: false), value: isAnimating)
         }
         .frame(width: width, height: height)
-        .onAppear { isAnimating = true }
     }
 }
