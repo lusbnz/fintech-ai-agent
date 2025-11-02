@@ -137,14 +137,21 @@ struct HomeView: View {
                                     .foregroundColor(.black)
                             }
                             
-                            ZStack(alignment: .leading) {
-                                Capsule()
-                                    .fill(Color.gray.opacity(0.2))
-                                    .frame(height: 6)
-                                Capsule()
-                                    .fill(Color.blue)
-                                    .frame(width: CGFloat(budget.progress) * 200, height: 6)
+                            GeometryReader { geometry in
+                                ZStack(alignment: .leading) {
+                                    Capsule()
+                                        .fill(Color.gray.opacity(0.2))
+                                        .frame(height: 6)
+
+                                    Capsule()
+                                        .fill(Color.blue)
+                                        .frame(
+                                            width: geometry.size.width * CGFloat(budget.progress),
+                                            height: 6
+                                        )
+                                }
                             }
+                            .frame(height: 6)
                             
                             HStack(spacing: 8) {
                                 VStack(alignment: .leading) {
