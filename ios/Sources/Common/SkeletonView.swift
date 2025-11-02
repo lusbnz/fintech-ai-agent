@@ -8,14 +8,14 @@ struct SkeletonView: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: cornerRadius)
-                .fill(Color.gray.opacity(0.2))
+                .fill(Color.gray.opacity(0.1))
             RoundedRectangle(cornerRadius: cornerRadius)
                 .fill(
                     LinearGradient(
                         gradient: Gradient(colors: [
-                            Color.gray.opacity(0.2),
-                            Color.gray.opacity(0.4),
-                            Color.gray.opacity(0.2)
+                            Color.gray.opacity(0.1),
+                            Color.gray.opacity(0.3),
+                            Color.gray.opacity(0.1)
                         ]),
                         startPoint: .leading,
                         endPoint: .trailing

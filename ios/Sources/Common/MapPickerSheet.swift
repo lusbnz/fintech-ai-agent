@@ -8,11 +8,12 @@ struct MapAnnotationItem: Identifiable {
     let coordinate: CLLocationCoordinate2D
 }
 
-// MARK: - MapPickerSheet
+// MARK: - MapPickerSheet (ĐÃ SỬA TẤT CẢ LỖI)
 struct MapPickerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var selectedLocation: Location?
     
+    // MARK: - States
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 21.0169, longitude: 105.7839),
         span: MKCoordinateSpan(latitudeDelta: 0.008, longitudeDelta: 0.008)
@@ -23,6 +24,7 @@ struct MapPickerSheet: View {
     @State private var isLoadingLocation = true
     @State private var isGeocoding = false
     @State private var showPermissionAlert = false
+    @State private var hasRequestedPermission = false // NGĂN GỌI NHIỀU LẦN
     
     @State private var locationManager = CLLocationManager()
     @State private var userTrackingMode: MapUserTrackingMode = .none
@@ -43,9 +45,6 @@ struct MapPickerSheet: View {
             .onTapGesture { point in
                 let coordinate = region.coordinate(for: point, in: UIScreen.main.bounds.size)
                 handleMapTap(at: coordinate)
-            }
-            .task {
-                await requestLocationPermissionAndCenter()
             }
             
             // MARK: - Close Button
@@ -81,7 +80,6 @@ struct MapPickerSheet: View {
             // MARK: - Bottom Sheet
             VStack(spacing: 0) {
                 Spacer()
-                
                 VStack(spacing: 16) {
                     Capsule()
                         .fill(Color.secondary.opacity(0.3))
@@ -91,7 +89,6 @@ struct MapPickerSheet: View {
                     Text("Chọn vị trí")
                         .font(.system(size: 18, weight: .semibold))
                     
-                    // Address Display
                     if isGeocoding {
                         HStack {
                             ProgressView().scaleEffect(0.8)
@@ -103,12 +100,10 @@ struct MapPickerSheet: View {
                         Text(locationName)
                             .font(.title3)
                             .fontWeight(.medium)
-                            .foregroundColor(.primary)
-                            .lineLimit(2)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 4)
                     } else if selectedCoordinate != nil {
-                        Text("Đang xác định địa chỉ...")
+                        Text("Đang xác định...")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     } else {
@@ -117,7 +112,6 @@ struct MapPickerSheet: View {
                             .foregroundColor(.secondary)
                     }
                     
-                    // Confirm Button
                     Button {
                         confirmLocation()
                     } label: {
@@ -160,18 +154,25 @@ struct MapPickerSheet: View {
         }
         .navigationBarHidden(true)
         
-        // MARK: - Permission Alert
+        // MARK: - CHỈ GỌI 1 LẦN KHI VIEW XUẤT HIỆN
+        .onAppear {
+            guard !hasRequestedPermission else { return }
+            hasRequestedPermission = true
+            Task { @MainActor in
+                await requestLocationPermissionAndCenter()
+            }
+        }
+        
+        // MARK: - Alert cấp quyền
         .alert("Cấp quyền vị trí", isPresented: $showPermissionAlert) {
             Button("Mở Cài đặt") {
                 if let url = URL(string: UIApplication.openSettingsURLString) {
                     UIApplication.shared.open(url)
                 }
             }
-            Button("Hủy", role: .cancel) {
-                dismiss()
-            }
+            Button("Hủy", role: .cancel) { dismiss() }
         } message: {
-            Text("Ứng dụng cần quyền vị trí để hiển thị vị trí hiện tại của bạn. Vui lòng cấp quyền trong Cài đặt.")
+            Text("Ứng dụng cần quyền vị trí để hiển thị vị trí hiện tại.")
         }
     }
     
@@ -186,54 +187,72 @@ struct MapPickerSheet: View {
     
     // MARK: - Reverse Geocode
     private func reverseGeocode(coordinate: CLLocationCoordinate2D) {
+        guard !isGeocoding else { return }
         let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
         isGeocoding = true
         
-        geocoder.reverseGeocodeLocation(location) { placemarks, error in
-            isGeocoding = false
-            if let placemark = placemarks?.first {
-                let address = [
-                    placemark.subThoroughfare,
-                    placemark.thoroughfare,
-                    placemark.locality,
-                    placemark.administrativeArea
-                ]
-                .compactMap { $0 }
-                .joined(separator: ", ")
-                
-                locationName = address.isEmpty ? "Vị trí đã chọn" : address
-            } else {
-                locationName = "Vị trí đã chọn"
+        Task {
+            do {
+                let placemarks = try await geocoder.reverseGeocodeLocation(location)
+                await MainActor.run {
+                    isGeocoding = false
+                    if let placemark = placemarks.first {
+                        let address = [
+                            placemark.subThoroughfare,
+                            placemark.thoroughfare,
+                            placemark.locality,
+                            placemark.administrativeArea
+                        ]
+                        .compactMap { $0 }
+                        .joined(separator: ", ")
+                        locationName = address.isEmpty ? "Vị trí đã chọn" : address
+                    } else {
+                        locationName = "Vị trí đã chọn"
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    isGeocoding = false
+                    locationName = "Vị trí đã chọn"
+                }
             }
         }
     }
     
-    // MARK: - Request Permission & Center
+    // MARK: - Request Permission
+    @MainActor
     private func requestLocationPermissionAndCenter() async {
-        locationManager.requestWhenInUseAuthorization()
+        // NGĂN GỌI NHIỀU LẦN
+        guard !hasRequestedPermission else { return }
+        hasRequestedPermission = true
         
         let status = locationManager.authorizationStatus
         
         switch status {
+        case .notDetermined:
+            locationManager.requestWhenInUseAuthorization()
+            // Đợi 1s rồi kiểm tra lại
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            await requestLocationPermissionAndCenter()
+            
         case .authorizedWhenInUse, .authorizedAlways:
             await centerOnUser()
+            
         case .denied, .restricted:
             isLoadingLocation = false
             showPermissionAlert = true
-        case .notDetermined:
-            // Đã request → chờ callback → sẽ tự gọi lại
-            await Task.yield()
-            await requestLocationPermissionAndCenter()
+            
         @unknown default:
             isLoadingLocation = false
             showPermissionAlert = true
         }
     }
     
+    // MARK: - Center on User
+    @MainActor
     private func centerOnUser() async {
         guard let userLocation = locationManager.location else {
             isLoadingLocation = false
-            region.center = CLLocationCoordinate2D(latitude: 21.0169, longitude: 105.7839)
             return
         }
         
@@ -242,7 +261,6 @@ struct MapPickerSheet: View {
             region.center = coord
             selectedCoordinate = coord
         }
-        
         isLoadingLocation = false
         reverseGeocode(coordinate: coord)
     }
@@ -252,11 +270,7 @@ struct MapPickerSheet: View {
         guard let coord = selectedCoordinate else { return }
         let finalName = locationName.isEmpty ? "Vị trí đã chọn" : locationName
         
-        selectedLocation = Location(
-            name: finalName,
-            lat: coord.latitude,
-            lng: coord.longitude
-        )
+        selectedLocation = Location(name: finalName, lat: coord.latitude, lng: coord.longitude)
         dismiss()
     }
 }
