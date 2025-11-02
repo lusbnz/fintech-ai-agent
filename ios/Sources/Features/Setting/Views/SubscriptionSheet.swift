@@ -74,7 +74,10 @@ struct SubscriptionSheet: View {
                     .clipShape(RoundedRectangle(cornerRadius: 32))
                     .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
                     
-                    if let data = viewModel.priceData {
+                    if viewModel.isLoading {
+                        ProgressView("Đang tải...") .padding()
+                    }
+                    else if let data = viewModel.priceData {
                         TabView(selection: $selectedTab) {
                             VStack(spacing: 12) {
                                 ForEach(data.plan["Pro"] ?? []) { plan in

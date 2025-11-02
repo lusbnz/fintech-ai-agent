@@ -363,7 +363,10 @@ struct TransactionView: View {
             
             VStack(spacing: 8) {
                 ForEach(transactions) { tx in
-                    NavigationLink(destination: TransactionDetailView(transaction: tx)) {
+                    NavigationLink(destination:
+                                    TransactionDetailView(transaction: tx)
+                                   
+                    ) {
                         TransactionItem(
                             title: tx.name,
                             remain: tx.type == "outcome"

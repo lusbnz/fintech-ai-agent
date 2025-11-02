@@ -9,6 +9,9 @@ final class TransactionViewModel: ObservableObject {
     @Published var hasMorePages = true
     @Published var currentPage = 1
     
+    @Published var showEdit = false
+    @Published var showDeleteConfirm = false
+    
     @Published var selectedBudgetId: String? = nil {
         didSet {
             resetAndReload()
