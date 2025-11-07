@@ -1,221 +1,249 @@
 import SwiftUI
+import Charts
 
 struct TransactionDetailView: View {
     let transaction: Transaction
     @Environment(\.dismiss) var dismiss
-    @State private var showMenu = false
     @StateObject private var viewModel = TransactionViewModel()
-    
+
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                
-                HStack {
-                    Button(action: { dismiss() }) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.black)
-                            .padding(10)
-                            .background(Color.white)
-                            .clipShape(Circle())
-                            .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
-                    }
-                    Spacer()
-                    Menu {
-                        Button("Edit", systemImage: "pencil") {
-                            viewModel.showEdit = true
-                        }
-                        Button("Delete", systemImage: "trash", role: .destructive) {
-                            viewModel.showDeleteConfirm = true
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.black)
-                            .padding(10)
-                            .background(Color.white)
-                            .clipShape(Circle())
-                            .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.top, 8)
-                
-                // MARK: - Title section
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(transaction.formattedDate)
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.gray)
-                    Text(transaction.name)
-                        .font(.system(size: 24, weight: .semibold))
-                        .foregroundColor(.black)
-                }
-                .padding(.horizontal)
-                
-                // MARK: - Timeline
-                VStack(alignment: .leading, spacing: 24) {
-                    if let location = transaction.location?.name, !location.isEmpty {
-                        timelineRow(icon: "mappin.and.ellipse", title: location)
-                    }
-                    
-                    timelineRow(icon: "tag", title: transaction.category ?? "Uncategorized")
-                    
-                    let formattedAmount = transaction.amount.formatVND()
-                    timelineRow(
-                        icon: transaction.type == "income" ? "arrow.down.circle.fill" : "arrow.up.circle.fill",
-                        title: transaction.type == "income" ? "Thu nhập" : "Chi tiêu",
-                        value: transaction.type == "income" ? "+\(formattedAmount)" : "-\(formattedAmount)",
-                        isNoLine: transaction.image == nil
-                    )
-                    .foregroundColor(transaction.type == "income" ? .green : .red)
-                    
-                    if let image = transaction.image, !image.isEmpty {
-                        imageSection(
-                            icon: "photo.on.rectangle",
-                            imageURL: image,
-                            time: transaction.formattedDate
-                        )
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.leading, 6)
-                
-                Spacer(minLength: 20)
-            }
-            .padding(.bottom, 32)
-        }
-        .background(
+        ZStack {
             LinearGradient(
-                gradient: Gradient(colors: [Color(hex: "EAF0FF"), Color.white]),
-                startPoint: .top,
-                endPoint: .bottom
+                gradient: Gradient(colors: [Color(hex: "DDE9FF"), Color.white]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
             )
             .ignoresSafeArea()
-        )
+
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 28) {
+                    headerSection
+                    summaryCard
+                    infoSection
+                    if let image = transaction.image, !image.isEmpty {
+                        attachmentSection(imageURL: image)
+                    }
+                    Spacer(minLength: 40)
+                }
+                .padding(.top, 12)
+                .padding(.bottom, 40)
+            }
+        }
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .fullScreenCover(isPresented: $viewModel.showEdit) {
             NavigationStack {
-                CreateTransactionView(
-                    transaction: transaction,
-                    onSuccess: {
-                        dismiss()
-                    }
-                )
+                CreateTransactionView(transaction: transaction) {
+                    dismiss()
+                }
             }
         }
         .alert("Delete Transaction", isPresented: $viewModel.showDeleteConfirm) {
-            Button("Cancel", role: .cancel) { }
+            Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
                 Task {
                     let success = await viewModel.deleteTransaction(transaction)
-                    if success {
-                        dismiss()
-                    }
+                    if success { dismiss() }
                 }
             }
         } message: {
-            Text("Are you sure you want to delete \"\(transaction.name)\"?")
+            Text("Are you sure you want to delete “\(transaction.name)”?")
         }
     }
-    
-    // MARK: - UI components
-    func timelineRow(icon: String, title: String, value: String? = nil, isNoLine: Bool? = false) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack {
-                iconCircle(content: .icon(icon))
-                if !(isNoLine ?? false) {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(width: 1)
-                        .frame(maxHeight: .infinity)
-                        .padding(.top, -4)
-                        .padding(.bottom, -20)
+
+    // MARK: - Header
+    private var headerSection: some View {
+        HStack {
+            Button { dismiss() } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(.black)
+                    .padding(10)
+                    .background(.white)
+                    .clipShape(Circle())
+                    .shadow(color: .black.opacity(0.1), radius: 3, y: 2)
+            }
+
+            Spacer()
+
+            Menu {
+                Button("Edit", systemImage: "pencil") {
+                    viewModel.showEdit = true
+                }
+                Button("Delete", systemImage: "trash", role: .destructive) {
+                    viewModel.showDeleteConfirm = true
+                }
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(.black)
+                    .padding(10)
+                    .background(.white)
+                    .clipShape(Circle())
+                    .shadow(color: .black.opacity(0.1), radius: 3, y: 2)
+            }
+        }
+        .padding(.horizontal)
+    }
+
+    // MARK: - Summary Card (tên + số tiền)
+    private var summaryCard: some View {
+        VStack(spacing: 12) {
+            Text(transaction.name)
+                .font(.system(size: 26, weight: .semibold))
+                .foregroundColor(.black)
+                .frame(maxWidth: .infinity, alignment: .center)
+
+            Text(transaction.formattedDate)
+                .font(.system(size: 13))
+                .foregroundColor(.gray)
+
+            Text(transaction.type == "income"
+                 ? "+\(transaction.amount.formatVND())"
+                 : "-\(transaction.amount.formatVND())")
+                .font(.system(size: 32, weight: .bold))
+                .foregroundStyle(
+                    transaction.type == "income"
+                    ? LinearGradient(colors: [.green], startPoint: .top, endPoint: .bottom)
+                    : LinearGradient(colors: [.red], startPoint: .top, endPoint: .bottom)
+                )
+                .padding(.top, 6)
+                .shadow(color: .black.opacity(0.1), radius: 1, y: 1)
+
+            if let desc = transaction.description, !desc.isEmpty {
+                Text("“\(desc)”")
+                    .font(.system(size: 14))
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+                    .padding(.top, 4)
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity)
+        .background(.white.opacity(0.9))
+        .cornerRadius(24)
+        .shadow(color: .black.opacity(0.08), radius: 6, y: 3)
+        .padding(.horizontal)
+        .transition(.scale)
+    }
+
+    // MARK: - Info Section
+    private var infoSection: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            Text("Transaction Details")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(.black)
+
+            VStack(spacing: 16) {
+                detailRow(icon: "tag.fill", color: .blue, title: "Category", value: transaction.category)
+                if let location = transaction.location?.name, !location.isEmpty {
+                    detailRow(icon: "mappin.circle.fill", color: .teal, title: "Location", value: location)
+                }
+                detailRow(
+                    icon: transaction.type == "income" ? "arrow.down.circle.fill" : "arrow.up.circle.fill",
+                    color: transaction.type == "income" ? .green : .red,
+                    title: transaction.type == "income" ? "Income" : "Expense",
+                    value: transaction.type.capitalized
+                )
+                detailRow(icon: "calendar", color: .orange, title: "Date", value: transaction.formattedDate)
+                detailRow(icon: "clock", color: .purple, title: "Created at", value: transaction.created_at.formattedDisplayDate())
+            }
+            .padding()
+            .background(.white)
+            .cornerRadius(20)
+            .shadow(color: .black.opacity(0.06), radius: 5, y: 2)
+        }
+        .padding(.horizontal)
+        .animation(.easeInOut, value: viewModel.showEdit)
+    }
+
+    // MARK: - Attachment Section
+    private func attachmentSection(imageURL: String) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "photo.fill.on.rectangle.fill")
+                    .foregroundColor(.gray)
+                Text("Attachment")
+                    .font(.system(size: 16, weight: .semibold))
+            }
+
+            AsyncImage(url: URL(string: imageURL)) { phase in
+                switch phase {
+                case .empty:
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.gray.opacity(0.15))
+                        ProgressView()
+                    }
+                    .frame(height: 220)
+                case .success(let img):
+                    img.resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: .infinity)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .shadow(color: .black.opacity(0.1), radius: 5, y: 3)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(Color.gray.opacity(0.1), lineWidth: 1)
+                        )
+                        .transition(.opacity.combined(with: .scale))
+                case .failure:
+                    Image(systemName: "photo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 100)
+                        .foregroundColor(.gray)
+                @unknown default:
+                    EmptyView()
                 }
             }
-            
-            VStack(alignment: .leading, spacing: 2) {
+        }
+        .padding()
+        .background(.white)
+        .cornerRadius(20)
+        .shadow(color: .black.opacity(0.06), radius: 5, y: 2)
+        .padding(.horizontal)
+    }
+
+    // MARK: - Reusable Row
+    private func detailRow(icon: String, color: Color, title: String, value: String?) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.15))
+                    .frame(width: 36, height: 36)
+                Image(systemName: icon)
+                    .foregroundColor(color)
+                    .font(.system(size: 17, weight: .medium))
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.primary)
-                if let value = value {
-                    Text(value)
-                        .font(.system(size: 13))
-                        .foregroundColor(.gray)
-                }
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.gray)
+                Text(value ?? "—")
+                    .font(.system(size: 15))
+                    .foregroundColor(.black)
+                    .lineLimit(nil)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
-    
-    @ViewBuilder
-    func imageSection(icon: String, imageURL: String, time: String) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack {
-                iconCircle(content: .icon(icon))
-//                Rectangle()
-//                    .fill(Color.gray.opacity(0.3))
-//                    .frame(width: 1)
-//                    .frame(maxHeight: .infinity)
-//                    .padding(.top, -4)
-//                    .padding(.bottom, -20)
-            }
-            
-            VStack(alignment: .leading, spacing: 6) {
-                AsyncImage(url: URL(string: imageURL)) { phase in
-                    switch phase {
-                    case .empty:
-                        ProgressView()
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 260)
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                            .frame(maxWidth: 300)
-                            .clipShape(RoundedRectangle(cornerRadius: 4))
-                            .shadow(color: .clear, radius: 0)
-                    case .failure:
-                        Image(systemName: "photo")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(height: 100)
-                            .foregroundColor(.gray)
-                    @unknown default:
-                        EmptyView()
-                    }
-                }
-                Text(time)
-                    .font(.system(size: 12))
-                    .foregroundColor(.gray)
-            }
+}
+
+// MARK: - Helpers
+extension String {
+    func formattedDisplayDate() -> String {
+        let df = ISO8601DateFormatter()
+        if let date = df.date(from: self) {
+            let output = DateFormatter()
+            output.dateStyle = .medium
+            output.timeStyle = .short
+            return output.string(from: date)
         }
-        .padding(.trailing, 16)
-    }
-    
-    enum IconContent {
-        case icon(String)
-        case text(String)
-    }
-    
-    @ViewBuilder
-    func iconCircle(content: IconContent) -> some View {
-        ZStack {
-            Circle()
-                .fill(Color.white)
-                .overlay(Circle().stroke(Color.gray.opacity(0.25), lineWidth: 1))
-                .frame(width: 28, height: 28)
-            
-            switch content {
-            case .icon(let system):
-                Image(systemName: system)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.gray)
-            case .text(let text):
-                Text(text)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.gray)
-            }
-        }
+        return self
     }
 }

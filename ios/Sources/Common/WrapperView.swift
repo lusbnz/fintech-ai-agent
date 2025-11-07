@@ -1,7 +1,8 @@
 import SwiftUI
+import CoreLocation
 
 enum Tabs: Int {
-    case home = 0, transaction, chat, challenge
+    case home = 0, transaction, chat, challenge, map
 }
 
 struct WrapperView: View {
@@ -10,6 +11,7 @@ struct WrapperView: View {
     @State private var activeTab = Tabs.home
     @State private var showChatView = false
     @State private var showCreateTransaction = false
+    @State private var showMapView = false
     
     var body: some View {
         ZStack {
@@ -33,6 +35,15 @@ struct WrapperView: View {
                     .tag(Tabs.chat)
                     .onAppear {
                         showChatView = true
+                    }
+                
+                Color.clear
+                    .tabItem {
+                        Label("Map", systemImage: "map.fill")
+                    }
+                    .tag(Tabs.map)
+                    .onAppear {
+                        showMapView = true
                     }
             }
             .tabBarMinimizeBehavior(.onScrollDown)
@@ -68,7 +79,13 @@ struct WrapperView: View {
         .fullScreenCover(isPresented: $showChatView) {
             ChatView()
                 .onDisappear {
-                    activeTab = .home 
+                    activeTab = .home
+                }
+        }
+        .fullScreenCover(isPresented: $showMapView) {
+            MapFullScreenView()
+                .onDisappear {
+                    activeTab = .home
                 }
         }
         .fullScreenCover(isPresented: $showCreateTransaction) {

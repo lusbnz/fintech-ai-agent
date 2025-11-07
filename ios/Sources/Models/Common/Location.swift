@@ -1,4 +1,6 @@
 import Foundation
+import MapKit
+import CoreLocation
 
 struct Location: Codable {
     let name: String
@@ -9,5 +11,10 @@ struct Location: Codable {
         self.name = name
         self.lat = lat
         self.lng = lng
+    }
+    
+    var coordinate: CLLocationCoordinate2D? {
+        guard let lat = lat, let lng = lng else { return nil }
+        return CLLocationCoordinate2D(latitude: lat, longitude: lng)
     }
 }

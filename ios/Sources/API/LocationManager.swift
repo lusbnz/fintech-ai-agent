@@ -1,3 +1,8 @@
+import SwiftUI
+import MapKit
+import CoreLocation
+import Combine
+
 final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let manager = CLLocationManager()
     @Published var currentLocation: CLLocation?
