@@ -51,15 +51,29 @@ struct MapFullScreenView: View {
     @State private var camera = MapCameraPosition.automatic
     @State private var currentIndex = 0
     @State private var selectedTransaction: Transaction?
+    @State private var selectedDate: Date? = nil
+    @State private var showDatePicker = false
+    @State private var isShowingDetail = false
     
     private let journey = Transaction.mockJourney()
     
-    private var totalAmount: Double { journey.reduce(0) { $0 + $1.amount } }
+    private var filteredJourney: [Transaction] {
+        guard let selectedDate else { return journey }
+        let calendar = Calendar.current
+        return journey.filter {
+            if let date = ISO8601DateFormatter().date(from: $0.date_time) {
+                return calendar.isDate(date, inSameDayAs: selectedDate)
+            }
+            return false
+        }
+    }
+    
+    private var totalAmount: Double { filteredJourney.reduce(0) { $0 + $1.amount } }
     private var totalDistance: Double {
-        guard journey.count > 1 else { return 0 }
+        guard filteredJourney.count > 1 else { return 0 }
         var distance = 0.0
-        for i in 0..<journey.count - 1 {
-            if let c1 = journey[i].location?.coordinate, let c2 = journey[i+1].location?.coordinate {
+        for i in 0..<filteredJourney.count - 1 {
+            if let c1 = filteredJourney[i].location?.coordinate, let c2 = filteredJourney[i+1].location?.coordinate {
                 distance += c1.distance(to: c2) / 1000
             }
         }
@@ -69,36 +83,38 @@ struct MapFullScreenView: View {
     var body: some View {
         ZStack {
             Map(position: $camera) {
-                ForEach(journey.indices, id: \.self) { i in
-                    let tx = journey[i]
+                ForEach(filteredJourney.indices, id: \.self) { i in
+                    let tx = filteredJourney[i]
                     if let coord = tx.location?.coordinate {
                         Annotation("", coordinate: coord) {
-                            ZStack {
-                                Circle()
-                                    .fill(.ultraThinMaterial)
-                                    .frame(width: currentIndex == i ? 58 : 46)
-                                    .overlay(Circle().stroke(.white.opacity(0.25), lineWidth: 1))
-                                    .shadow(color: .black.opacity(0.3), radius: 10)
-                                    .scaleEffect(currentIndex == i ? 1.25 : 1.0)
-                                    .animation(.spring(response: 0.5, dampingFraction: 0.7), value: currentIndex)
-                                
-                                VStack(spacing: 4) {
-                                    Image(systemName: iconForCategory(tx.category))
-                                        .font(.title2)
-                                        .foregroundColor(colorForAmount(tx.amount))
+                            VStack(spacing: 2) {
+                                ZStack {
+                                    Circle()
+                                        .fill(colorForAmount(tx.amount)) // 🔹 màu chính
+                                        .frame(width: currentIndex == i ? 34 : 28, height: currentIndex == i ? 34 : 28)
+                                        .overlay(Circle().stroke(Color.white, lineWidth: 2)) // 🔹 viền trắng
+                                        .shadow(color: .black.opacity(currentIndex == i ? 0.25 : 0.1), radius: currentIndex == i ? 5 : 2, y: 2)
+                                        .scaleEffect(currentIndex == i ? 1.2 : 1.0)
+                                        .animation(.spring(response: 0.4, dampingFraction: 0.7), value: currentIndex)
                                     
-                                    Text("\(i+1)")
-                                        .font(.caption2.bold())
+                                    Image(systemName: iconForCategory(tx.category))
+                                        .font(.system(size: 14, weight: .semibold))
                                         .foregroundColor(.white)
-                                        .padding(6)
-                                        .background(.black.opacity(0.5), in: Circle())
+                                        .scaleEffect(currentIndex == i ? 1.15 : 1.0)
                                 }
+                                
+                                // Số thứ tự nhỏ gọn hơn
+                                Text("\(i + 1)")
+                                    .font(.caption2.weight(.semibold))
+                                    .foregroundColor(.black.opacity(0.7))
                             }
+                            .padding(4)
+                            .contentShape(Rectangle())
                             .onTapGesture {
-                                withAnimation(.easeInOut) {
+                                withAnimation(.easeInOut(duration: 0.5)) {
                                     currentIndex = i
                                     selectedTransaction = tx
-                                    moveToTransaction(coord)
+                                    moveToTransaction(coord, lowered: true)
                                 }
                             }
                         }
@@ -108,17 +124,18 @@ struct MapFullScreenView: View {
             }
             .ignoresSafeArea()
             
-            // UI Overlay
+            // Overlay
             VStack {
-                // Header
+                // 🔹 Header gọn gàng, nền trắng
                 HStack {
                     Button { dismiss() } label: {
                         Image(systemName: "xmark")
                             .font(.headline.bold())
-                            .foregroundColor(.white)
-                            .padding(12)
-                            .background(.ultraThinMaterial, in: Circle())
-                            .overlay(Circle().stroke(.white.opacity(0.2), lineWidth: 0.5))
+                            .foregroundColor(.black)
+                            .padding(8)
+                            .background(Color.white.opacity(0.9), in: Circle())
+                            .overlay(Circle().stroke(Color.gray.opacity(0.2), lineWidth: 0.5))
+                            .shadow(color: .black.opacity(0.1), radius: 3)
                     }
                     
                     Spacer()
@@ -126,41 +143,113 @@ struct MapFullScreenView: View {
                     VStack(spacing: 4) {
                         Text("Hành trình chi tiêu")
                             .font(.headline.bold())
-                            .foregroundColor(.white)
-                        Text("\(journey.count) điểm • \(totalDistance, specifier: "%.1f") km • \(totalAmount, format: .currency(code: "VND"))")
+                            .foregroundColor(.black)
+                        Text("\(filteredJourney.count) điểm • \(totalDistance, specifier: "%.1f") km • \(totalAmount, format: .currency(code: "VND"))")
                             .font(.footnote)
-                            .foregroundColor(.white.opacity(0.85))
+                            .foregroundColor(.gray)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 10)
-                    .background(.ultraThinMaterial, in: Capsule())
-                    .overlay(Capsule().stroke(.white.opacity(0.2), lineWidth: 0.5))
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 6)
+                    .background(Color.white.opacity(0.9), in: Capsule())
+                    .overlay(Capsule().stroke(Color.gray.opacity(0.2), lineWidth: 0.5))
+                    .shadow(color: .black.opacity(0.1), radius: 3)
                     
                     Spacer()
-                    Spacer().frame(width: 48)
+                    Spacer().frame(width: 44)
                 }
                 .padding(.horizontal)
-                .padding(.top, 30)
                 
                 Spacer()
                 
-                // Control bar
-                HStack(spacing: 40) {
-                    glassButton(icon: "chevron.left",
-                                disabled: currentIndex == 0,
-                                action: prevStep)
-                    glassButton(icon: "chevron.right",
-                                disabled: currentIndex >= journey.count - 1,
-                                action: nextStep)
+                // 🔹 Thanh điều hướng + lọc ngày
+                VStack(spacing: 10) {
+                    // Thanh điều hướng + lọc ngày
+                    HStack(spacing: 24) {
+                        glassButton(icon: "chevron.left",
+                                    disabled: currentIndex == 0,
+                                    action: prevStep)
+                        
+                        DatePicker(
+                            "",
+                            selection: Binding(
+                                get: { selectedDate ?? Date() },
+                                set: { newDate in
+                                    selectedDate = newDate
+                                    currentIndex = 0 // reset hành trình sau khi chọn ngày mới
+                                }
+                            ),
+                            displayedComponents: .date
+                        )
+                        .labelsHidden()
+                        .datePickerStyle(.compact)
+                        .frame(maxWidth: 180)
+                        
+                        glassButton(icon: "chevron.right",
+                                    disabled: currentIndex >= filteredJourney.count - 1,
+                                    action: nextStep)
+                    }
+                    
+                    // Nút xóa lọc
+                    if selectedDate != nil {
+                        Button("Xóa lọc") {
+                            withAnimation { selectedDate = nil }
+                        }
+                        .font(.footnote)
+                        .foregroundColor(.blue)
+                    }
+                    
+                    // 🔹 Thông tin sơ bộ của giao dịch hiện tại
+                    if filteredJourney.indices.contains(currentIndex) {
+                        let tx = filteredJourney[currentIndex]
+                        Button {
+                            selectedTransaction = tx // bấm mở sheet chi tiết
+                        } label: {
+                            HStack(spacing: 14) {
+                                Image(systemName: iconForCategory(tx.category))
+                                    .font(.title2)
+                                    .foregroundColor(colorForAmount(tx.amount))
+                                    .frame(width: 32, height: 32)
+                                    .background(Color.white, in: Circle())
+                                    .shadow(color: .black.opacity(0.1), radius: 2, y: 1)
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(tx.name)
+                                        .font(.headline)
+                                        .foregroundColor(.black)
+                                        .lineLimit(1)
+                                    Text(tx.location?.name ?? tx.category)
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+                                
+                                Spacer()
+                                
+                                Text("−\(tx.amount.formatted(.currency(code: "VND")))")
+                                    .font(.subheadline.bold())
+                                    .foregroundColor(colorForAmount(tx.amount))
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
+                            .background(Color.white.opacity(0.95), in: RoundedRectangle(cornerRadius: 16))
+                            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.gray.opacity(0.2), lineWidth: 0.5))
+                            .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
+                        }
+                        .buttonStyle(.plain)
+                        .transition(.opacity.combined(with: .move(edge: .bottom)))
+                    }
                 }
-                .padding()
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 35))
-                .overlay(RoundedRectangle(cornerRadius: 35).stroke(.white.opacity(0.2), lineWidth: 0.6))
-                .padding(.bottom, 40)
+                .padding(12)
+                .background(Color.white.opacity(0.95), in: RoundedRectangle(cornerRadius: 28))
+                .overlay(RoundedRectangle(cornerRadius: 28).stroke(Color.gray.opacity(0.2), lineWidth: 0.5))
+                .shadow(color: .black.opacity(0.1), radius: 6, y: 2)
+                .animation(.easeInOut(duration: 0.3), value: currentIndex)
             }
         }
         .sheet(item: $selectedTransaction) { tx in
             TransactionDetailSheet(transaction: tx)
+                .presentationDetents([.fraction(0.45), .large])
+                .presentationBackgroundInteraction(.enabled)
+                .presentationCornerRadius(28)
         }
         .onAppear { centerOnJourney() }
     }
@@ -169,36 +258,38 @@ struct MapFullScreenView: View {
     private func glassButton(icon: String, disabled: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)
-                .font(.system(size: 22, weight: .semibold))
-                .foregroundColor(disabled ? .gray.opacity(0.4) : .white)
-                .frame(width: 70, height: 70)
-                .background(.ultraThinMaterial, in: Circle())
-                .overlay(Circle().stroke(.white.opacity(0.15), lineWidth: 0.5))
-                .shadow(color: .black.opacity(0.25), radius: 10, y: 5)
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundColor(disabled ? .gray.opacity(0.4) : .black) // 🔹 icon đen
+                .frame(width: 52, height: 52)
+                .background(Color.white.opacity(0.9), in: Circle()) // 🔹 nền trắng
+                .overlay(Circle().stroke(Color.gray.opacity(0.2), lineWidth: 0.4))
+                .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
         }
         .disabled(disabled)
     }
     
     private func nextStep() {
-        guard currentIndex < journey.count - 1 else { return }
+        guard currentIndex < filteredJourney.count - 1 else { return }
         currentIndex += 1
-        if let coord = journey[currentIndex].location?.coordinate {
+        if let coord = filteredJourney[currentIndex].location?.coordinate {
             moveToTransaction(coord)
         }
     }
-    
+
     private func prevStep() {
         guard currentIndex > 0 else { return }
         currentIndex -= 1
-        if let coord = journey[currentIndex].location?.coordinate {
+        if let coord = filteredJourney[currentIndex].location?.coordinate {
             moveToTransaction(coord)
         }
     }
     
-    private func moveToTransaction(_ coord: CLLocationCoordinate2D) {
-        withAnimation(.easeInOut(duration: 1.0)) {
+    private func moveToTransaction(_ coord: CLLocationCoordinate2D, lowered: Bool = false) {
+        var center = coord
+        if lowered { center.latitude -= 0.004 } // nhích xuống để pin ở nửa trên
+        withAnimation(.easeInOut(duration: 2)) {
             camera = .region(MKCoordinateRegion(
-                center: coord,
+                center: center,
                 span: MKCoordinateSpan(latitudeDelta: 0.007, longitudeDelta: 0.007)
             ))
         }
@@ -206,8 +297,8 @@ struct MapFullScreenView: View {
     }
     
     private func centerOnJourney() {
-        guard let first = journey.first?.location?.coordinate,
-              let last = journey.last?.location?.coordinate else { return }
+        guard let first = filteredJourney.first?.location?.coordinate,
+              let last = filteredJourney.last?.location?.coordinate else { return }
         let center = CLLocationCoordinate2D(
             latitude: (first.latitude + last.latitude) / 2,
             longitude: (first.longitude + last.longitude) / 2
@@ -242,49 +333,56 @@ extension CLLocationCoordinate2D {
 }
 
 
-// MARK: - Detail Sheet (unchanged but styled slightly)
+// MARK: - Detail Sheet
 struct TransactionDetailSheet: View {
     let transaction: Transaction
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 28) {
-                ZStack {
-                    AngularGradient(colors: [.blue, .purple, .pink, .blue], center: .center)
-                        .blur(radius: 60)
-                        .frame(height: 240)
-                        .mask(RoundedRectangle(cornerRadius: 28))
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 24) {
+                
+                // 🔹 Header
+                VStack(spacing: 10) {
+                    Circle()
+                        .fill(colorForCategory(transaction.category).gradient)
+                        .frame(width: 80, height: 80)
+                        .overlay {
+                            Image(systemName: iconForCategory(transaction.category))
+                                .font(.system(size: 36, weight: .semibold))
+                                .foregroundColor(.white)
+                        }
+                        .shadow(color: colorForCategory(transaction.category).opacity(0.25), radius: 8, y: 3)
                     
-                    VStack(spacing: 12) {
-                        Image(systemName: iconForCategory(transaction.category))
-                            .font(.system(size: 80))
-                            .foregroundStyle(.white)
-                            .symbolEffect(.bounce.down, options: .repeating)
-                        
-                        Text(transaction.name)
-                            .font(.title.bold())
-                            .foregroundStyle(.white)
-                        
-                        Text("−\(transaction.amount.formatted(.currency(code: "VND")))")
-                            .font(.system(size: 40, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
+                    Text(transaction.name)
+                        .font(.title3.weight(.semibold))
+                        .foregroundColor(.primary)
+                    
+                    Text("−\(transaction.amount.formatted(.currency(code: "VND")))")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundColor(colorForCategory(transaction.category))
+                }
+                .padding(.top, 12)
+                
+                // 🔹 Info section
+                VStack(spacing: 16) {
+                    infoRow(icon: "calendar", title: "Thời gian", value: formatDate(transaction.date_time))
+                    infoRow(icon: "location", title: "Địa điểm", value: transaction.location?.name ?? "Không xác định")
+                    infoRow(icon: "tag", title: "Danh mục", value: transaction.category)
+                    if let note = transaction.description, !note.isEmpty {
+                        infoRow(icon: "text.alignleft", title: "Ghi chú", value: note)
                     }
                 }
+                .padding(20)
+                .background(Color(.systemGray6), in: RoundedRectangle(cornerRadius: 20))
                 .padding(.horizontal)
                 
-                VStack(spacing: 20) {
-                    DetailRow(icon: "calendar.circle.fill", title: "Thời gian", value: formatDate(transaction.date_time))
-                    DetailRow(icon: "location.circle.fill", title: "Địa điểm", value: transaction.location?.name ?? "Không xác định")
-                    DetailRow(icon: "tag.fill", title: "Danh mục", value: transaction.category)
-                    DetailRow(icon: "note.text", title: "Ghi chú", value: transaction.description ?? "Không có")
-                }
-                .padding()
-                .background(.ultraThickMaterial, in: RoundedRectangle(cornerRadius: 24))
-                .padding(.horizontal)
+                Spacer(minLength: 12)
             }
-            .padding(.top, 10)
         }
+        .presentationDetents([.fraction(0.45), .medium, .large])
+        .presentationCornerRadius(28)
+        .background(Color(.systemBackground))
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Xong") { dismiss() }
@@ -294,15 +392,45 @@ struct TransactionDetailSheet: View {
         }
     }
     
+    // MARK: - Info Row
+    private func infoRow(icon: String, title: String, value: String) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(.blue)
+                .frame(width: 26)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Text(value)
+                    .font(.body)
+                    .foregroundColor(.primary)
+                    .lineLimit(nil)
+            }
+            Spacer()
+        }
+    }
+    
+    // MARK: - Helpers
     private func formatDate(_ iso: String) -> String {
         let formatter = ISO8601DateFormatter()
         if let date = formatter.date(from: iso) {
             let df = DateFormatter()
-            df.dateStyle = .medium
-            df.timeStyle = .short
+            df.dateFormat = "EEEE, d MMM yyyy • HH:mm"
             return df.string(from: date)
         }
         return iso
+    }
+    
+    private func colorForCategory(_ category: String) -> Color {
+        switch category {
+        case "Ăn uống": return .orange
+        case "Di chuyển": return .blue
+        case "Mua sắm": return .pink
+        default: return .gray
+        }
     }
     
     private func iconForCategory(_ category: String) -> String {
