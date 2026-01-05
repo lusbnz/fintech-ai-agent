@@ -20,6 +20,7 @@ struct CreateTransactionView: View {
     
     @State private var transactionName: String = ""
     @State private var amount: String = ""
+    @State private var rawAmount: String = ""
     @State private var dateTime: Date = Date()
     @State private var selectedBudgetId: String?
     @State private var selectedTypeDisplay: String = "Chi ra"
@@ -40,10 +41,24 @@ struct CreateTransactionView: View {
     @State private var recurringIntervalUnit: String = "month"
 
     let recurringUnits = ["1 Tuần", "1 Tháng", "1 Năm"]
-
     let schedulePeriods = ["1 Tuần", "1 Tháng", "1 Năm"]
-    
     let typeOptions = [("Nạp vào", "income"), ("Chi ra", "outcome")]
+    
+    private let amountSuggestions = [".000", "0.000", "00.000"]
+    
+    private func formatNumber(_ value: String) -> String {
+        let digits = value.filter { $0.isNumber }
+        guard let number = Int(digits) else { return "" }
+        
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.groupingSeparator = "."
+        return formatter.string(from: NSNumber(value: number)) ?? digits
+    }
+    
+    private func parseNumber(_ formatted: String) -> String {
+        return formatted.filter { $0.isNumber }
+    }
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -69,13 +84,45 @@ struct CreateTransactionView: View {
                         .overlay(Rectangle().frame(height: 1).foregroundColor(Color(hex: "E0E0E0")).padding(.top, 40))
                         .padding(.horizontal)
                     
-                    TextField("Số tiền", text: $amount)
-                        .keyboardType(.decimalPad)
+                    // Amount Input với suggestions
+                    VStack(spacing: 12) {
+                        // Amount Field
+                        HStack(spacing: 4) {
+                            TextField("0", text: $amount)
+                                .keyboardType(.numberPad)
+                                .font(.system(size: 32, weight: .bold))
+                                .multilineTextAlignment(.center)
+                                .onChange(of: amount) { newValue in
+                                    let digits = parseNumber(newValue)
+                                    rawAmount = digits
+                                    if !digits.isEmpty {
+                                        amount = formatNumber(digits)
+                                    }
+                                }
+                            
+                            Text("VND")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundColor(Color(hex: "636363"))
+                        }
                         .padding()
-                        .font(.system(size: 28, weight: .semibold))
-                        .multilineTextAlignment(.center)
                         .background(Color.white.opacity(0.8))
                         .cornerRadius(24)
+                        
+                        AmountSuggestionsView(
+                            currentAmount: rawAmount,
+                            suggestions: amountSuggestions
+                        ) { suggestion in
+                            let newAmount: String
+                            if suggestion.hasPrefix(".") {
+                                newAmount = rawAmount + suggestion.filter { $0.isNumber }
+                            } else {
+                                let zeros = suggestion.filter { $0 == "0" }.count
+                                newAmount = rawAmount + String(repeating: "0", count: zeros)
+                            }
+                            rawAmount = newAmount
+                            amount = formatNumber(newAmount)
+                        }
+                    }
                     
                     Group {
                         if transactionToEdit == nil {
@@ -92,7 +139,7 @@ struct CreateTransactionView: View {
                                     Picker("", selection: $selectedBudgetId) {
                                         Text("Chọn ngân sách").tag(String?.none)
                                         ForEach(app.budgets) { budget in
-                                            Text(budget.name).tag(Optional(budget.id))
+                                            Text(budget.name).tag(budget.id as String?)
                                         }
                                     }
                                     .pickerStyle(.menu)
@@ -101,14 +148,16 @@ struct CreateTransactionView: View {
                             }
                         }
                         
-                        infoRow(icon: "arrow.left.arrow.right", title: "Loại") {
-                            Picker("", selection: $selectedTypeDisplay) {
-                                ForEach(typeOptions, id: \.0) {
-                                    display, _ in Text(display).tag(display)
+                        if transactionToEdit == nil {
+                            infoRow(icon: "arrow.left.arrow.right", title: "Loại") {
+                                Picker("", selection: $selectedTypeDisplay) {
+                                    ForEach(typeOptions, id: \.0) {
+                                        display, _ in Text(display).tag(display)
+                                    }
                                 }
+                                .pickerStyle(.menu)
+                                .padding(.vertical, 2)
                             }
-                            .pickerStyle(.menu)
-                            .padding(.vertical, 2)
                         }
                         
                         infoRow(icon: "calendar", title: "Thời gian") {
@@ -134,7 +183,7 @@ struct CreateTransactionView: View {
                             }
                         }
                         
-                        if  transactionToEdit == nil {
+                        if transactionToEdit == nil {
                             Toggle(isOn: $isRecurring) {
                                 HStack {
                                     Image(systemName: "repeat")
@@ -170,7 +219,6 @@ struct CreateTransactionView: View {
                             }
                             .transition(.opacity.combined(with: .move(edge: .top)))
                         }
-
                     }
                     
                     VStack(alignment: .leading, spacing: 8) {
@@ -312,7 +360,8 @@ struct CreateTransactionView: View {
         .task {
             if let prefill = defaultBudgetId {
                 selectedBudgetId = prefill
-            } else if let firstBudget = app.budgets.first {
+            }
+            else if let firstBudget = app.budgets.first {
                 selectedBudgetId = firstBudget.id
             }
             if let prefill = defaultCategoryId {
@@ -333,7 +382,7 @@ struct CreateTransactionView: View {
                 }
             }
         } message: {
-            Text("Bạn có chắc là muốn xoá giao dịch “\(transactionToEdit?.name ?? "")”?")
+            Text("Bạn có chắc là muốn xoá giao dịch?")
         }
         .onAppear {
             if let transaction = transactionToEdit {
@@ -373,18 +422,19 @@ struct CreateTransactionView: View {
         }
     }
 
-    
     private var isFormValid: Bool {
         !transactionName.isEmpty &&
-        !amount.isEmpty &&
-        Double(amount) != nil &&
+        !rawAmount.isEmpty &&
+        Double(rawAmount) != nil &&
         selectedBudgetId != nil
     }
     
     private func fillData(from transaction: Transaction) {
         transactionName = transaction.name ?? ""
         
-        amount = "\(Int(transaction.amount))"
+        let amountInt = Int(transaction.amount)
+        rawAmount = "\(amountInt)"
+        amount = formatNumber("\(amountInt)")
         
         let dateFormatter = ISO8601DateFormatter()
         if let parsedDate = dateFormatter.date(from: transaction.date_time) {
@@ -426,7 +476,7 @@ struct CreateTransactionView: View {
     }
     
     private func saveTransaction() {
-        guard let amountDouble = Double(amount),
+        guard let amountDouble = Double(rawAmount),
               let budgetId = selectedBudgetId else { return }
         
         let typeValue = typeOptions.first { $0.0 == selectedTypeDisplay }?.1 ?? "outcome"
@@ -446,8 +496,6 @@ struct CreateTransactionView: View {
                 
                 let noteValue = description.isEmpty ? transactionName : description
                 let categoryIdToSend = selectedCategoryId
-                
-                let isoDate = dateFormatter.string(from: dateTime)
                 let recurringStartIso = isRecurring ? dateFormatter.string(from: recurringStartDate) : nil
                 
                 if let transaction = transactionToEdit {
@@ -458,7 +506,6 @@ struct CreateTransactionView: View {
                         category_id: categoryIdToSend,
                         note: noteValue,
                         date: isoDate,
-                        type: typeValue,
                         image: imageUrl,
                         is_recurring: isRecurring ? true : nil,
                         recurring_start_date: recurringStartIso,
@@ -514,6 +561,64 @@ struct CreateTransactionView: View {
         .padding(.horizontal)
         .background(Color.white.opacity(0.8))
         .cornerRadius(16)
+    }
+}
+
+// MARK: - Amount Suggestions View
+struct AmountSuggestionsView: View {
+    let currentAmount: String
+    let suggestions: [String]
+    let onSelect: (String) -> Void
+    
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(suggestions, id: \.self) { suggestion in
+                    Button {
+                        onSelect(suggestion)
+                    } label: {
+                        Text(previewAmount(suggestion))
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.primary)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.white)
+                                    .shadow(color: .black.opacity(0.06), radius: 3, y: 1)
+                            )
+                    }
+                }
+            }
+            .padding(.horizontal, 4)
+        }
+    }
+    
+    private func previewAmount(_ suggestion: String) -> String {
+        if currentAmount.isEmpty {
+            return suggestion
+        }
+        
+        let zeros = suggestion.filter { $0 == "0" }.count
+        let newAmount = currentAmount + String(repeating: "0", count: zeros)
+        
+        guard let number = Int(newAmount) else { return suggestion }
+        
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.groupingSeparator = "."
+        
+        return (formatter.string(from: NSNumber(value: number)) ?? newAmount)
+    }
+    
+    private func formatQuickAmount(_ value: String) -> String {
+        guard let number = Int(value) else { return value }
+        
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.groupingSeparator = "."
+        
+        return (formatter.string(from: NSNumber(value: number)) ?? value)
     }
 }
 

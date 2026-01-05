@@ -10,18 +10,18 @@ struct SettingsView: View {
     
     @State private var showSubscriptionSheet = false
     
-    @State private var selectedCurrency: String = "VNĐ"
+    @State private var selectedCurrency: String = "VND"
     @State private var selectedLanguage: String = "Vietnamese"
     
     @State private var showFeatureModal = false
     @State private var featureText: String = ""
     
     private let currencyMap: [String: String] = [
-        "usd": "USD", "vnd": "VNĐ"
+        "vnd": "VND"
     ]
     
     private let reverseCurrencyMap: [String: String] = [
-        "USD": "usd", "VNĐ": "vnd"
+        "VND": "vnd"
     ]
     
     var body: some View {
@@ -37,33 +37,6 @@ struct SettingsView: View {
                 .padding(.top, 8)
                 
                 Form {
-//                    VStack(spacing: 8) {
-//                        Text("Sở hữu Finn Premium").font(.headline)
-//                        Text("Sở hữu một AI tiên tiến — người dẫn đường, đưa ra insight và phát triển cùng bạn.")
-//                            .font(.footnote)
-//                            .multilineTextAlignment(.center)
-//                            .foregroundColor(.secondary)
-//                        
-//                        Button(action: {
-//                            showSubscriptionSheet = true
-//                        }) {
-//                            VStack(spacing: 4) {
-//                                Text("Thanh toán")
-//                                    .font(.system(size: 16, weight: .semibold))
-//                                    .foregroundColor(.white)
-//                                Text("Gói sẽ tự động gia hạn cho đến khi bạn hủy")
-//                                    .font(.caption)
-//                                    .foregroundColor(.white.opacity(0.8))
-//                            }
-//                        }
-//                        .padding(.vertical, 6)
-//                        .padding(.horizontal, 16)
-//                        .frame(maxWidth: .infinity)
-//                        .background(Color.orange)
-//                        .clipShape(RoundedRectangle(cornerRadius: 100))
-//                    }
-//                    .padding(.vertical, 8)
-                    
                     Section {
                         NavigationLink {
                             ProfileView()

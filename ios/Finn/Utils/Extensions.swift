@@ -56,25 +56,100 @@ extension UIApplication {
 
 extension Transaction {
     var displayDate: Date? {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return formatter.date(from: date_time)
-    }
+          let formatter = ISO8601DateFormatter()
+          formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+          guard let utcDate = formatter.date(from: date_time) else {
+              return nil
+          }
+
+          let vnTimeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh")!
+          let seconds = TimeInterval(vnTimeZone.secondsFromGMT(for: utcDate))
+
+          return Date(timeInterval: seconds, since: utcDate)
+      }
 
     var formattedDate: String {
-        guard let date = displayDate else { return "Invalid Date" }
+        guard let date = displayDate else {
+            return "Invalid Date"
+        }
+
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "vi_VN")
         formatter.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh")
         formatter.dateFormat = "EEE, MMM d"
-        return formatter.string(from: date)
-    }
 
+        let result = formatter.string(from: date)
+
+        return result
+    }
     var timeString: String {
         guard let date = displayDate else { return "" }
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "vi_VN")
         formatter.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh")
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: date)
+    }
+}
+
+extension TransactionReccurring {
+
+    private var vnTimeZone: TimeZone {
+        TimeZone(identifier: "Asia/Ho_Chi_Minh")!
+    }
+
+    private var isoFormatter: ISO8601DateFormatter {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }
+
+    private func parseDate(_ value: String?) -> Date? {
+        guard let value,
+              let utcDate = isoFormatter.date(from: value)
+        else { return nil }
+
+        let seconds = TimeInterval(vnTimeZone.secondsFromGMT(for: utcDate))
+        return Date(timeInterval: seconds, since: utcDate)
+    }
+
+    var displayDate: Date? {
+        parseDate(created_at)
+    }
+
+    var lastRun: Date? {
+        parseDate(last_run_at)
+    }
+
+    var formattedDate: String {
+        formatDate(displayDate)
+    }
+
+    var formattedLastRun: String {
+        formatDate(lastRun)
+    }
+
+    var timeString: String {
+        formatTime(displayDate)
+    }
+
+    private func formatDate(_ date: Date?) -> String {
+        guard let date else { return "—" }
+
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "vi_VN")
+        formatter.timeZone = vnTimeZone
+        formatter.dateFormat = "EEE, MMM d"
+        return formatter.string(from: date)
+    }
+
+    private func formatTime(_ date: Date?) -> String {
+        guard let date else { return "" }
+
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "vi_VN")
+        formatter.timeZone = vnTimeZone
         formatter.dateFormat = "HH:mm"
         return formatter.string(from: date)
     }

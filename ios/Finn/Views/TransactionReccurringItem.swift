@@ -5,7 +5,6 @@ struct TransactionReccurringItem: View {
     let remain: String
     var time: String
     var attachments: Int
-//    var category: Category?
     var categoryColor: Color = .blue
     var categoryIcon: String = "cart.fill"
     var lastRun: String?
@@ -25,10 +24,13 @@ struct TransactionReccurringItem: View {
                 Text(title)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.primary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .lineLimit(2)
+                    .truncationMode(.tail)
                 
                 if lastRun != nil {
                     HStack(spacing: 6) {
-                        Text(lastRun!)
+                        Text("Lần cuối: \(lastRun!)")
                     }
                     .font(.system(size: 10))
                     .foregroundColor(.secondary)
@@ -56,12 +58,6 @@ struct TransactionReccurringItem: View {
                 Text(remain)
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundColor(remain.contains("-") ? .red : .green)
-                
-//                if let categoryName = category?.name {
-//                    Text(categoryName)
-//                        .font(.system(size: 10))
-//                        .foregroundColor(.secondary)
-//                }
             }
             
             Image(systemName: "chevron.right")

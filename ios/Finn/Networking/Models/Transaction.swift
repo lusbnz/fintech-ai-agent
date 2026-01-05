@@ -61,7 +61,6 @@ struct TransactionReccurring: Codable, Identifiable {
     let type: String
     let description: String?
     let user_id: String
-//    let category: Category?
     let category_id: String?
     let amount: Double
     let image: String?
@@ -81,9 +80,7 @@ struct TransactionReccurring: Codable, Identifiable {
     
     enum CodingKeys: String, CodingKey {
         case id = "_id"
-        case name, budget_id, type, description, user_id,
-//             category,
-             category_id, amount
+        case name, budget_id, type, description, user_id, category_id, amount
         case image, created_at, updated_at, interval_unit, interval_value, next_run_at, last_run_at, active, is_recurring, recurring_start_date, recurring_interval_unit, recurring_interval_value
     }
 }

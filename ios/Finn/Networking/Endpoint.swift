@@ -19,6 +19,9 @@ enum Endpoint {
     case transactionReccurringUpdate(id: String, body: [String: Any])
     case notiList(page: Int)
     case notiUpdate(id: String, body: [String: Any])
+    case chatList(page: Int)
+    case createChat(body: [String: Any])
+    case createChatResponse(id: String, body: [String: Any])
     case categoryList(page: Int)
     case categoryCreate(body: [String: Any])
     case categoryUpdate(id: String, body: [String: Any])
@@ -26,6 +29,7 @@ enum Endpoint {
     case uploadImage
     case getPrices(version: String)
     case feedbackCreate(body: [String: Any])
+    case getDashboard(body: [String: Any])
 
     var url: URL {
         switch self {
@@ -61,6 +65,12 @@ enum Endpoint {
             return URL(string: Endpoint.baseURL + "/notifications/list")!
         case .notiUpdate(let id, _):
             return URL(string: Endpoint.baseURL + "/notifications/\(id)")!
+        case .chatList:
+            return URL(string: Endpoint.baseURL + "/chats")!
+        case .createChat:
+            return URL(string: Endpoint.baseURL + "/chats")!
+        case .createChatResponse(let id, _):
+            return URL(string: Endpoint.baseURL + "/chats/\(id)/reverse")!
         case .categoryList:
             return URL(string: Endpoint.baseURL + "/categories/list")!
         case .categoryCreate:
@@ -75,6 +85,8 @@ enum Endpoint {
             return URL(string: Endpoint.baseURL + "/prices")!
         case .feedbackCreate:
             return URL(string: Endpoint.baseURL + "/feedbacks/create")!
+        case .getDashboard:
+            return URL(string: Endpoint.baseURL + "/dashboards/overview")!
         }
     }
 
@@ -108,6 +120,12 @@ enum Endpoint {
             return "GET"
         case .notiUpdate:
             return "PUT"
+        case .chatList:
+            return "GET"
+        case .createChat:
+            return "POST"
+        case .createChatResponse:
+            return "POST"
         case .categoryList:
             return "GET"
         case .categoryCreate:
@@ -121,6 +139,8 @@ enum Endpoint {
         case .getPrices:
             return "GET"
         case .feedbackCreate:
+            return "POST"
+        case .getDashboard:
             return "POST"
         }
     }
@@ -162,54 +182,64 @@ enum Endpoint {
             case .budgetDelete(_):
                 request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
             
-        case .transactionList(let page, let filter):
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            var json: [String: Any] = ["page": page]
-            if let filter = filter, !filter.toJSON().isEmpty {
-                json["filter"] = filter.toJSON()
-            }
-            request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
-            request.httpBody = try JSONSerialization.data(withJSONObject: json)
+            case .transactionList(let page, let filter):
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                var json: [String: Any] = ["page": page]
+                if let filter = filter, !filter.toJSON().isEmpty {
+                    json["filter"] = filter.toJSON()
+                }
+                request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
+                request.httpBody = try JSONSerialization.data(withJSONObject: json)
+                
+            case .transactionCreate(let body):
+                request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
+                request.httpBody = try JSONSerialization.data(withJSONObject: body)
             
-        case .transactionCreate(let body):
-            request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
-            request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        
-        case .transactionUpdate(_, let body):
-            request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
-            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+            case .transactionUpdate(_, let body):
+                request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
+                request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        case .transactionDelete(_):
-            request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
+            case .transactionDelete(_):
+                request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
+                
+            case .transactionReccurringList(let page, let filter):
+                request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
             
-        case .transactionReccurringList(let page, let filter):
-            request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
-        
-        case .transactionReccurringUpdate(_, let body):
-            request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
-            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+            case .transactionReccurringUpdate(_, let body):
+                request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
+                request.httpBody = try JSONSerialization.data(withJSONObject: body)
+                
+            case .notiList(let page):
+                request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
             
-        case .notiList(let page):
-            request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
-        
-        case .notiUpdate(_, let body):
-            request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
-            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+            case .notiUpdate(_, let body):
+                request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
+                request.httpBody = try JSONSerialization.data(withJSONObject: body)
+                
+            case .chatList(let page):
+                request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
+                
+            case .categoryList(let page):
+                request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
+               
+            case .createChat(let body):
+                request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
+                request.httpBody = try JSONSerialization.data(withJSONObject: body)
+            case .createChatResponse(_, let body):
+                request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
+                request.httpBody = try JSONSerialization.data(withJSONObject: body)
+                
+            case .categoryCreate(let body):
+                request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
+                request.httpBody = try JSONSerialization.data(withJSONObject: body)
             
-        case .categoryList(let page):
-            request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
-            
-        case .categoryCreate(let body):
-            request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
-            request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        
-        case .categoryUpdate(_, let body):
-            request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
-            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+            case .categoryUpdate(_, let body):
+                request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
+                request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        case .categoryDelete(_):
-            request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
-            
+            case .categoryDelete(_):
+                request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
+                
             case .uploadImage:
                 let boundary = "Boundary-\(UUID().uuidString)"
                 request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
@@ -233,9 +263,13 @@ enum Endpoint {
                     request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
                 }
             
-        case .feedbackCreate(let body):
-            request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
-            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+            case .feedbackCreate(let body):
+                request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
+                request.httpBody = try JSONSerialization.data(withJSONObject: body)
+            
+            case .getDashboard(let body):
+                request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
+                request.httpBody = try JSONSerialization.data(withJSONObject: body)
         }
 
         return request

@@ -12,7 +12,7 @@ struct HomeView: View {
     let types = ["Tất cả", "Nạp vào", "Chi ra"]
     
     private var userCurrency: String {
-        app.profile?.currency ?? "VNĐ"
+        (app.profile?.currency ?? "VND").uppercased()
     }
     
     private var latestTransactions: [Transaction] {
@@ -27,6 +27,13 @@ struct HomeView: View {
         return filtered.sorted { $0.date_time > $1.date_time }.prefix(5).map { $0 }
     }
     
+    private var aiInsightText: String {
+        return """
+        Tuần này bạn chi 1.2 triệu cho cafe, tăng 40% so với tuần trước. Có vẻ họp nhiều nhỉ?
+        """
+    }
+
+    
     var body: some View {
             ZStack {
                 LinearGradient(colors: [Color(hex: "DDE9FF"), Color.white],
@@ -37,6 +44,47 @@ struct HomeView: View {
                     VStack(spacing: 24) {
                         header
                         summaryBudgetCard
+                    
+                        HStack(spacing: 12) {
+                            ZStack {
+                                Circle()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [.purple, .pink],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .frame(width: 40, height: 40)
+                                
+                                Image(systemName: "sparkles")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(.white)
+                            }
+                            .padding(.leading)
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("AI Insight")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(.purple)
+                                
+                                Text(aiInsightText)
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.secondary)
+                                    .lineLimit(2)
+                            }
+                            .padding(.vertical)
+                            
+                            Spacer()
+                            
+                        }
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color.white)
+                                .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
+                        )
+                        .padding(.horizontal)
+                        
                         if !app.budgets.isEmpty {
                             BudgetDonutChart(budgets: app.budgets, userCurrency: userCurrency)
                                 .padding(.horizontal)
@@ -58,7 +106,7 @@ struct HomeView: View {
     private var header: some View {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Xin chào, \(app.profile?.display_name ?? "Khách") 👋")
+                    Text("Xin chào, \(app.profile?.display_name ?? "Khách")")
                         .font(.system(size: 22, weight: .semibold))
                         .foregroundColor(.black)
                     Text(Date.now.formatted(date: .abbreviated, time: .omitted))
@@ -67,6 +115,18 @@ struct HomeView: View {
                 }
                 
                 Spacer()
+                
+//                NavigationLink {
+//                    BankNotificationsView()
+//                } label: {
+//                    Image(systemName: "icloud.fill")
+//                        .font(.system(size: 16, weight: .semibold))
+//                        .foregroundColor(.black)
+//                        .padding(10)
+//                        .background(Color.white)
+//                        .clipShape(Circle())
+//                        .shadow(color: .black.opacity(0.1), radius: 3, y: 2)
+//                }
                 
                 NavigationLink {
                     NotificationView()
@@ -183,7 +243,7 @@ struct HomeView: View {
                     .padding(.horizontal)
                     
                     VStack(spacing: 14) {
-                        ForEach(app.budgets.prefix(3)) { budget in
+                        ForEach(app.budgets.reversed().prefix(3)) { budget in
                             NavigationLink(
                                 destination: BudgetDetailView(budget: budget)
                             ) {
@@ -247,7 +307,7 @@ struct HomeView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 20)
             } else {
-                VStack(spacing: 10) {
+                VStack(spacing: 8) {
                     ForEach(latestTransactions) { tx in
                         NavigationLink(destination: CreateTransactionView(transaction: tx)) {
                             TransactionItem(
@@ -256,12 +316,13 @@ struct HomeView: View {
                                     ? "-\(Int(abs(tx.amount)).formattedWithSeparator) \(userCurrency)"
                                     : "+\(Int(tx.amount).formattedWithSeparator) \(userCurrency)",
                                 time: tx.formattedDate,
-                                attachments: tx.image != nil ? 1 : 0,
+                                attachments: (tx.image?.isEmpty == false) ? 1 : 0,
                                 category: tx.category != nil ? tx.category : nil,
                                 categoryColor: tx.type == "income" ? .green : .red,
                                 categoryIcon: tx.type == "income" ? "arrow.down.circle.fill" : "arrow.up.circle.fill"
                             )
                         }
+                        .buttonStyle(PlainButtonStyle())
                     }
                 }
                 .padding(.horizontal)

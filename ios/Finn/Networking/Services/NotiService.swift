@@ -5,12 +5,12 @@ final class NotiService {
     static let shared = NotiService()
     private init() {}
     
-    func getNoti(page: Int = 1) async throws -> NotiResponse {
+    func getNoti(page: Int = 1) async throws -> NotiListData {
         let endpoint = Endpoint.notiList(page: page)
         
-        let response: APIResponse<NotiResponse> = try await APIClient.shared.request(
+        let response: APIResponse<NotiListData> = try await APIClient.shared.request(
             endpoint,
-            as: APIResponse<NotiResponse>.self
+            as: APIResponse<NotiListData>.self
         )
         
         return response.data
@@ -18,7 +18,7 @@ final class NotiService {
 
     func updateNoti(
         id: String,
-        is_read: Bool,
+        is_read: Bool
     ) async throws -> Noti {
         var body: [String: Any] = [:]
         body["is_read"] = is_read

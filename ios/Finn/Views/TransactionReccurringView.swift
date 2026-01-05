@@ -10,7 +10,7 @@ struct TransactionReccurringView: View {
     @State private var selectedBudget: String = "Tất cả"
     
     private var userCurrency: String {
-        app.profile?.currency ?? "VNĐ"
+        (app.profile?.currency ?? "VND").uppercased()
     }
     
     private var budgetTags: [String] {
@@ -205,12 +205,11 @@ struct TransactionReccurringView: View {
                 TransactionReccurringItem(
                     title: tx.name,
                     remain: remainText,
-                    time: tx.created_at,
+                    time: tx.formattedDate,
                     attachments: tx.image != nil ? 1 : 0,
-//                    category: tx.category != nil ? tx.category : nil,
                     categoryColor: categoryColor,
                     categoryIcon: "repeat.circle.fill",
-                    lastRun: tx.last_run_at
+                    lastRun: tx.formattedLastRun,
                 )
             }
             .buttonStyle(.plain)

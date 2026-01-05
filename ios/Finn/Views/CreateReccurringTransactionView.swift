@@ -20,6 +20,7 @@ struct CreateReccurringTransactionView: View {
     
     @State private var transactionName: String = ""
     @State private var amount: String = ""
+    @State private var rawAmount: String = "" // Số thực không format
     @State private var dateTime: Date = Date()
     @State private var selectedBudgetId: String?
     @State private var selectedTypeDisplay: String = "Chi ra"
@@ -40,10 +41,24 @@ struct CreateReccurringTransactionView: View {
     @State private var recurringIntervalUnit: String = "month"
 
     let recurringUnits = ["1 Tuần", "1 Tháng", "1 Năm"]
-
     let schedulePeriods = ["1 Tuần", "1 Tháng", "1 Năm"]
-    
     let typeOptions = [("Nạp vào", "income"), ("Chi ra", "outcome")]
+    
+    private let amountSuggestions = [".000", "0.000", "00.000"]
+    
+    private func formatNumber(_ value: String) -> String {
+        let digits = value.filter { $0.isNumber }
+        guard let number = Int(digits) else { return "" }
+        
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.groupingSeparator = "."
+        return formatter.string(from: NSNumber(value: number)) ?? digits
+    }
+    
+    private func parseNumber(_ formatted: String) -> String {
+        return formatted.filter { $0.isNumber }
+    }
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -69,13 +84,47 @@ struct CreateReccurringTransactionView: View {
                         .overlay(Rectangle().frame(height: 1).foregroundColor(Color(hex: "E0E0E0")).padding(.top, 40))
                         .padding(.horizontal)
                     
-                    TextField("Số tiền", text: $amount)
-                        .keyboardType(.decimalPad)
+                    // Amount Input với suggestions
+                    VStack(spacing: 12) {
+                        // Amount Field
+                        HStack(spacing: 4) {
+                            TextField("0", text: $amount)
+                                .keyboardType(.numberPad)
+                                .font(.system(size: 32, weight: .bold))
+                                .multilineTextAlignment(.center)
+                                .onChange(of: amount) { newValue in
+                                    let digits = parseNumber(newValue)
+                                    rawAmount = digits
+                                    if !digits.isEmpty {
+                                        amount = formatNumber(digits)
+                                    }
+                                }
+                            
+                            Text("VND")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundColor(Color(hex: "636363"))
+                        }
                         .padding()
-                        .font(.system(size: 28, weight: .semibold))
-                        .multilineTextAlignment(.center)
                         .background(Color.white.opacity(0.8))
                         .cornerRadius(24)
+                        
+                        AmountSuggestionsView(
+                            currentAmount: rawAmount,
+                            suggestions: amountSuggestions
+                        ) { suggestion in
+                            let newAmount: String
+                            if suggestion.hasPrefix(".") {
+                                newAmount = (rawAmount) + suggestion.filter { $0.isNumber }
+                            } else if Int(suggestion) != nil {
+                                newAmount = suggestion
+                            } else {
+                                let zeros = suggestion.filter { $0 == "0" }.count
+                                newAmount = (rawAmount) + String(repeating: "0", count: zeros)
+                            }
+                            rawAmount = newAmount
+                            amount = formatNumber(newAmount)
+                        }
+                    }
                     
                     Group {
                         infoRow(icon: "arrow.left.arrow.right", title: "Loại") {
@@ -112,21 +161,20 @@ struct CreateReccurringTransactionView: View {
                             }
                         }
                       
-                            Toggle(isOn: $isRecurring) {
-                                HStack {
-                                    Image(systemName: "repeat")
-                                        .foregroundColor(Color(hex: "636363"))
-                                    Text("Giao dịch định kỳ")
-                                        .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(Color(hex: "636363"))
-                                }
+                        Toggle(isOn: $isRecurring) {
+                            HStack {
+                                Image(systemName: "repeat")
+                                    .foregroundColor(Color(hex: "636363"))
+                                Text("Giao dịch định kỳ")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(Color(hex: "636363"))
                             }
-                            .toggleStyle(SwitchToggleStyle(tint: .black))
-                            .padding()
-                            .background(Color.white.opacity(0.8))
-                            .cornerRadius(16)
-                            .animation(.easeInOut, value: isRecurring)
-    
+                        }
+                        .toggleStyle(SwitchToggleStyle(tint: .black))
+                        .padding()
+                        .background(Color.white.opacity(0.8))
+                        .cornerRadius(16)
+                        .animation(.easeInOut, value: isRecurring)
 
                         if isRecurring {
                             infoRow(icon: "calendar", title: "Ngày bắt đầu định kỳ") {
@@ -147,7 +195,6 @@ struct CreateReccurringTransactionView: View {
                             }
                             .transition(.opacity.combined(with: .move(edge: .top)))
                         }
-
                     }
                     
                     VStack(alignment: .leading, spacing: 8) {
@@ -310,7 +357,7 @@ struct CreateReccurringTransactionView: View {
                 }
             }
         } message: {
-            Text("Bạn có chắc là muốn xoá giao dịch “\(transactionToEdit?.name ?? "")”?")
+            Text("Bạn có chắc là muốn xoá giao dịch?")
         }
         .onAppear {
             if let transaction = transactionToEdit {
@@ -352,15 +399,17 @@ struct CreateReccurringTransactionView: View {
     
     private var isFormValid: Bool {
         !transactionName.isEmpty &&
-        !amount.isEmpty &&
-        Double(amount) != nil &&
+        !rawAmount.isEmpty &&
+        Double(rawAmount) != nil &&
         selectedBudgetId != nil
     }
     
     private func fillData(from transaction: TransactionReccurring) {
         transactionName = transaction.name ?? ""
         
-        amount = "\(Int(transaction.amount))"
+        let amountInt = Int(transaction.amount)
+        rawAmount = "\(amountInt)"
+        amount = formatNumber("\(amountInt)")
         
         isRecurring = transaction.active ?? false
         
@@ -388,7 +437,7 @@ struct CreateReccurringTransactionView: View {
     }
     
     private func saveTransaction() {
-        guard let amountDouble = Double(amount),
+        guard let amountDouble = Double(rawAmount),
               let budgetId = selectedBudgetId else { return }
         
         let typeValue = typeOptions.first { $0.0 == selectedTypeDisplay }?.1 ?? "outcome"
@@ -406,9 +455,6 @@ struct CreateReccurringTransactionView: View {
                 
                 let noteValue = description.isEmpty ? transactionName : description
                 let categoryIdToSend = selectedCategoryId
-                
-                let isoDate = dateFormatter.string(from: dateTime)
-                let recurringStartIso = isRecurring ? dateFormatter.string(from: recurringStartDate) : nil
                 
                 if let transaction = transactionToEdit {
                     _ = try await TransactionService.shared.updateReccurringTransaction(

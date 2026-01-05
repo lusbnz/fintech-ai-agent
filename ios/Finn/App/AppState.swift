@@ -13,6 +13,7 @@ final class AppState: ObservableObject {
     @Published var reccurringTransactions: [TransactionReccurring] = []
     @Published var categories: [Category] = []
     @Published var noti: [Noti] = []
+    @Published var chats: [Chat] = []
     
     let settings = AppSettings.shared
 
@@ -32,21 +33,21 @@ final class AppState: ObservableObject {
             async let transactionResponse = TransactionService.shared.getTransactions(page: 1)
             async let reccurringTransactionResponse = TransactionService.shared.getReccurringTransactions(page: 1)
             async let categoryResponse = CategoryService.shared.getCategories(page: 1)
-            async let notiResponse = NotiService.shared.getNoti(page: 1)
+            async let chatResponse = ChatService.shared.getChats(page: 1)
 
             let userResult = try await userResponse
             let budgetResult = try await budgetResponse
             let transactionResult = try await transactionResponse
             let reccurringTransactionResult = try await reccurringTransactionResponse
             let categoryResult = try await categoryResponse
-            let notiResult = try await notiResponse
+            let chatResult = try await chatResponse
 
             self.profile = userResult.self
             self.budgets = budgetResult.data.data
             self.transactions = transactionResult.data
             self.reccurringTransactions = reccurringTransactionResult.data
             self.categories = categoryResult.data
-            self.noti = notiResult.data
+            self.chats = chatResult.data
             
             if budgetResult.data.data.count == 0 {
                 settings.isSettedFirstBudeget = false
@@ -56,7 +57,7 @@ final class AppState: ObservableObject {
 
         } catch {
             isAppReady = true
-            initialLoadError = "Tải dữ liệu ban đầu thất bại. Một số tính năng có thể chậm."
+            initialLoadError = "Tải dữ liệu ban đầu thất bại."
         }
     }
 }

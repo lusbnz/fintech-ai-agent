@@ -6,7 +6,7 @@ struct BudgetItem: View {
     let budget: Budget
     
     private var userCurrency: String {
-        app.profile?.currency ?? "VNĐ"
+        (app.profile?.currency ?? "VND").uppercased()
     }
     
     var color: Color {

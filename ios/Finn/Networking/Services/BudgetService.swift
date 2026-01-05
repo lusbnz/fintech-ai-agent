@@ -31,10 +31,9 @@ final class BudgetService {
         return response.data
     }
     
-    func updateBudget(id: String, name: String? = nil, amount: Double? = nil, start_date: String? = nil, recurring_topup_amount: Double? = nil, recurring_interval_unit: String? = nil, recurring_interval_value: Int? = nil, recurring_active: Bool? = nil) async throws -> Budget {
+    func updateBudget(id: String, name: String? = nil, start_date: String? = nil, recurring_topup_amount: Double? = nil, recurring_interval_unit: String? = nil, recurring_interval_value: Int? = nil, recurring_active: Bool? = nil) async throws -> Budget {
         var body: [String: Any] = [:]
         if let name = name { body["name"] = name }
-        if let amount = amount { body["amount"] = amount }
         if let start_date = start_date { body["start_date"] = start_date }
         if let recurring_topup_amount = recurring_topup_amount { body["recurring_topup_amount"] = recurring_topup_amount }
         if let recurring_interval_unit = recurring_interval_unit { body["recurring_interval_unit"] = recurring_interval_unit }

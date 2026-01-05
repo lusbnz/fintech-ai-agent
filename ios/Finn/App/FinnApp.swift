@@ -13,6 +13,8 @@ struct FinnApp: App {
     @StateObject var budgetViewModel: BudgetViewModel
     @StateObject var transactionViewModel: TransactionViewModel
     @StateObject var categoryViewModel: CategoryViewModel
+    @StateObject var chatViewModel: ChatViewModel
+    @StateObject var dashboardViewModel: DashboardViewModel
     @StateObject private var settings = AppSettings.shared
 
     init() {
@@ -22,6 +24,8 @@ struct FinnApp: App {
         _budgetViewModel = StateObject(wrappedValue: BudgetViewModel(app: appState))
         _transactionViewModel = StateObject(wrappedValue: TransactionViewModel())
         _categoryViewModel = StateObject(wrappedValue: CategoryViewModel(app: appState))
+        _chatViewModel = StateObject(wrappedValue: ChatViewModel(app: appState))
+        _dashboardViewModel = StateObject(wrappedValue: DashboardViewModel())
     }
 
     var body: some Scene {
@@ -32,6 +36,8 @@ struct FinnApp: App {
                 .environmentObject(budgetViewModel)
                 .environmentObject(transactionViewModel)
                 .environmentObject(categoryViewModel)
+                .environmentObject(chatViewModel)
+                .environmentObject(dashboardViewModel)
                 .environmentObject(settings)
         }
     }

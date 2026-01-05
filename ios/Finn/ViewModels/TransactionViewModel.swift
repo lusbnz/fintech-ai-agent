@@ -14,7 +14,7 @@ final class TransactionViewModel: ObservableObject {
     
     @Published var showEdit = false
     @Published var showDeleteConfirm = false
-    
+
     @Published var selectedBudgetId: String? = nil {
         didSet {
             resetAndReload()
@@ -23,6 +23,13 @@ final class TransactionViewModel: ObservableObject {
     
     private var cancellables = Set<AnyCancellable>()
     private let pageSize = 20
+    
+    private func sortByNewest(_ list: [Transaction]) -> [Transaction] {
+        list.sorted { (lhs: Transaction, rhs: Transaction) in
+            (lhs.createdAtDate ?? .distantPast) >
+            (rhs.createdAtDate ?? .distantPast)
+        }
+    }
     
     init() {
         $selectedBudgetId
@@ -47,9 +54,11 @@ final class TransactionViewModel: ObservableObject {
             if Task.isCancelled { return }
             
             if append {
-                transactions.append(contentsOf: response.data)
+                transactions = sortByNewest(
+                    transactions + response.data
+                )
             } else {
-                transactions = response.data
+                transactions = sortByNewest(response.data)
             }
             
             hasMorePages = response.pagination.page < response.pagination.total_page
@@ -180,6 +189,9 @@ final class TransactionViewModel: ObservableObject {
                 transactions.insert(newTx, at: 0)
             }
             
+            
+            await loadTransactions()
+            
             return true
         } catch {
             self.error = "Lỗi khi tạo giao dịch: \(error.localizedDescription)"
@@ -231,6 +243,8 @@ final class TransactionViewModel: ObservableObject {
                 if let budget_id = budget_id, selectedBudgetId != nil, budget_id != selectedBudgetId {
                     transactions.remove(at: index)
                 }
+                
+                await loadTransactions()
             }
             
             return true
@@ -284,6 +298,8 @@ final class TransactionViewModel: ObservableObject {
                 reccurringTransactions[index] = updatedTx
             }
             
+            await loadReccurringTransactions()
+            
             return true
         } catch {
             self.error = "Cập nhật thất bại: \(error.localizedDescription)"
@@ -300,6 +316,8 @@ final class TransactionViewModel: ObservableObject {
             try await TransactionService.shared.deleteTransaction(id: transaction.id)
             
             transactions.removeAll { $0.id == transaction.id }
+            
+            await loadTransactions()
             return true
         } catch {
             self.error = "Xoá thất bại: \(error.localizedDescription)"
@@ -316,10 +334,18 @@ final class TransactionViewModel: ObservableObject {
             try await TransactionService.shared.deleteTransaction(id: transaction.id)
             
             transactions.removeAll { $0.id == transaction.id }
+            
+            await loadReccurringTransactions()
             return true
         } catch {
             self.error = "Xoá thất bại: \(error.localizedDescription)"
             return false
         }
+    }
+}
+
+extension Transaction {
+    var createdAtDate: Date? {
+        ISO8601DateFormatter().date(from: date_time)
     }
 }

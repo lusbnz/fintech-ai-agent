@@ -25,6 +25,9 @@ struct TransactionItem: View {
                 Text(title)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.primary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .lineLimit(2)
+                    .truncationMode(.tail)
                 
                 if lastRun != nil {
                     HStack(spacing: 6) {

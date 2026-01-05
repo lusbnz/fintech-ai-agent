@@ -8,6 +8,7 @@ final class NotiViewModel: ObservableObject {
     @Published var noti: [Noti] = []
     @Published var hasMorePages = true
     @Published var currentPage = 1
+    @Published var totalNotifications: Int = 0
     
     @Published var showEdit = false
     @Published var showDeleteConfirm = false
@@ -34,6 +35,7 @@ final class NotiViewModel: ObservableObject {
             
             hasMorePages = response.pagination.page < response.pagination.total_page
             currentPage = response.pagination.page
+            totalNotifications = response.pagination.total ?? 0
 
         } catch {
             if let urlError = error as? URLError, urlError.code == .cancelled {

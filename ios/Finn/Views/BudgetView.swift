@@ -10,7 +10,7 @@ struct BudgetView: View {
     @State private var showCreateNew = false
     
     private var userCurrency: String {
-        app.profile?.currency ?? "VNĐ"
+        (app.profile?.currency ?? "VND").uppercased()
     }
     
     var body: some View {
@@ -106,7 +106,7 @@ struct BudgetView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 8) {
-                            ForEach(app.budgets) { budget in
+                            ForEach(app.budgets.reversed()) { budget in
                                 NavigationLink {
                                     BudgetDetailView(budget: budget)
                                 } label: {

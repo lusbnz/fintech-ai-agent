@@ -20,7 +20,7 @@ struct Budget: Codable, Identifiable {
     let total_outcome: Double
     
     let recurring_topup_amount: Double
-    let recurring_interval_unit: String
+    let recurring_interval_unit: String?
     let recurring_interval_value: Int
     let recurring_active: Bool
     let recurring_next_run_at: Date?

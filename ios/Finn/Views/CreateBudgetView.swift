@@ -11,17 +11,33 @@ struct CreateBudgetView: View {
     
     @State private var budgetName: String = ""
     @State private var amount: String = ""
-    @State private var recurring_topup_amount = ""
+    @State private var rawAmount: String = "" // Số thực không format
+    @State private var recurring_topup_amount: String = ""
+    @State private var rawRecurringAmount: String = "" // Số thực không format
     @State private var dateTime: Date = Date()
     @State private var period: String = "1 Month"
     @State private var isRecurring: Bool = false
     
     let periods = ["1 Week", "1 Month", "3 Month"]
     
+    private let amountSuggestions = [".000", "0.000", "00.000"]
+    
+    private func formatNumber(_ value: String) -> String {
+        let digits = value.filter { $0.isNumber }
+        guard let number = Int(digits) else { return "" }
+        
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.groupingSeparator = "."
+        return formatter.string(from: NSNumber(value: number)) ?? digits
+    }
+    
+    private func parseNumber(_ formatted: String) -> String {
+        return formatted.filter { $0.isNumber }
+    }
+    
     private var isFormValid: Bool {
-        !budgetName.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !amount.trimmingCharacters(in: .whitespaces).isEmpty &&
-        Double(amount) ?? 0 > 0
+        !budgetName.trimmingCharacters(in: .whitespaces).isEmpty
     }
     
     var body: some View {
@@ -55,25 +71,6 @@ struct CreateBudgetView: View {
                         )
                         .padding(.horizontal)
                     
-                    TextField("Số tiền", text: $amount)
-                        .keyboardType(.decimalPad)
-                        .padding()
-                        .font(.system(size: 28, weight: .semibold))
-                        .multilineTextAlignment(.center)
-                        .background(Color.white.opacity(0.8))
-                        .cornerRadius(24)
-                        .onTapGesture {
-                        }
-                        .toolbar {
-                            ToolbarItemGroup(placement: .keyboard) {
-                                Spacer()
-                                Button("Done") {
-                                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
-                                                                    to: nil, from: nil, for: nil)
-                                }
-                            }
-                        }
-                    
                     Toggle(isOn: $isRecurring) {
                         HStack {
                             Image(systemName: "repeat")
@@ -89,24 +86,45 @@ struct CreateBudgetView: View {
                     .cornerRadius(16)
                     
                     if isRecurring {
-                        TextField("Nạp định kỳ", text: $recurring_topup_amount)
-                            .keyboardType(.decimalPad)
-                            .padding()
-                            .font(.system(size: 28, weight: .semibold))
-                            .multilineTextAlignment(.center)
-                            .background(Color.white.opacity(0.8))
-                            .cornerRadius(24)
-                            .onTapGesture {
-                            }
-                            .toolbar {
-                                ToolbarItemGroup(placement: .keyboard) {
-                                    Spacer()
-                                    Button("Done") {
-                                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
-                                                                        to: nil, from: nil, for: nil)
+                        VStack(spacing: 12) {
+                            HStack(spacing: 4) {
+                                TextField("0", text: $recurring_topup_amount)
+                                    .keyboardType(.numberPad)
+                                    .font(.system(size: 28, weight: .bold))
+                                    .multilineTextAlignment(.center)
+                                    .onChange(of: recurring_topup_amount) { newValue in
+                                        let digits = parseNumber(newValue)
+                                        rawRecurringAmount = digits
+                                        if !digits.isEmpty {
+                                            recurring_topup_amount = formatNumber(digits)
+                                        }
                                     }
-                                }
+                                
+                                Text("VND")
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundColor(Color(hex: "636363"))
                             }
+                            .padding()
+                            .background(Color.white)
+                            .cornerRadius(16)
+                            
+                            BudgetAmountSuggestionsView(
+                                currentAmount: rawRecurringAmount,
+                                suggestions: amountSuggestions
+                            ) { suggestion in
+                                let newAmount: String
+                                if suggestion.hasPrefix(".") {
+                                    newAmount = rawRecurringAmount + suggestion.filter { $0.isNumber }
+                                } else if Int(suggestion) != nil {
+                                    newAmount = suggestion
+                                } else {
+                                    let zeros = suggestion.filter { $0 == "0" }.count
+                                    newAmount = rawRecurringAmount + String(repeating: "0", count: zeros)
+                                }
+                                rawRecurringAmount = newAmount
+                                recurring_topup_amount = formatNumber(newAmount)
+                            }
+                        }
                         
                         VStack(alignment: .leading, spacing: 8) {
                             HStack(spacing: 6) {
@@ -137,16 +155,23 @@ struct CreateBudgetView: View {
                                 .datePickerStyle(.compact)
                         }
                         
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Lần nạp tiếp theo:")
-                                .font(.system(size: 14))
-                                .foregroundColor(Color(hex: "636363"))
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Lần nạp tiếp theo")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(Color(hex: "636363"))
+                                
+                                Text(nextRefillDate().formatted(date: .long, time: .omitted))
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.black)
+                            }
                             
-                            Text(nextRefillDate().formatted(date: .numeric, time: .omitted))
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(.black)
+                            Spacer()
+                            
+                            Image(systemName: "calendar.badge.clock")
+                                .font(.system(size: 24))
+                                .foregroundColor(Color(hex: "636363"))
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
                         .padding()
                         .background(Color.white.opacity(0.9))
                         .cornerRadius(16)
@@ -234,11 +259,19 @@ struct CreateBudgetView: View {
         .onAppear {
             if let budget = budget {
                 budgetName = budget.name
-                amount = String(budget.amount)
+                
+                let amountInt = Int(budget.amount)
+                rawAmount = "\(amountInt)"
+                amount = formatNumber("\(amountInt)")
+                
                 dateTime = budget.start_date
                 isRecurring = budget.recurring_active
-                recurring_topup_amount = String(budget.recurring_topup_amount)
-                let unit = budget.recurring_interval_unit.lowercased()
+                
+                let recurringInt = Int(budget.recurring_topup_amount)
+                rawRecurringAmount = "\(recurringInt)"
+                recurring_topup_amount = formatNumber("\(recurringInt)")
+                
+                let unit = budget.recurring_interval_unit!.lowercased()
                 let val = budget.recurring_interval_value
                 if unit == "week" && val == 1 {
                     period = "1 Week"
@@ -259,9 +292,8 @@ struct CreateBudgetView: View {
     }
     
     private func createOrUpdateBudget() {
-        guard let amountValue = Double(amount) else { return }
         let recurringTopupAmountValue: Double? =
-            isRecurring ? (Double(recurring_topup_amount) ?? 0) : 0
+            isRecurring ? (Double(rawRecurringAmount) ?? 0) : 0
         
         var unit: String = "week"
         var intervalValue: Int = 1
@@ -289,22 +321,21 @@ struct CreateBudgetView: View {
                 success = await budgetViewModel.updateBudget(
                     id: budget.id,
                     name: budgetName,
-                    amount: amountValue,
                     start_date: dateTime,
                     recurring_topup_amount: recurringTopupAmountValue ?? 0,
                     recurring_interval_unit: unit,
                     recurring_interval_value: intervalValue,
-                    recurring_active: active,
+                    recurring_active: active
                 )
             } else {
                 success = await budgetViewModel.createBudget(
                     name: budgetName,
-                    amount: amountValue,
+                    amount: active ? (recurringTopupAmountValue ?? 0) : 0,
                     start_date: dateTime,
                     recurring_topup_amount: recurringTopupAmountValue ?? 0,
                     recurring_interval_unit: unit,
                     recurring_interval_value: intervalValue,
-                    recurring_active: active,
+                    recurring_active: active
                 )
             }
             
@@ -344,5 +375,71 @@ struct CreateBudgetView: View {
         .padding()
         .background(Color.white.opacity(0.8))
         .cornerRadius(16)
+    }
+}
+
+struct BudgetAmountSuggestionsView: View {
+    let currentAmount: String
+    let suggestions: [String]
+    let onSelect: (String) -> Void
+    
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(suggestions, id: \.self) { suggestion in
+                    Button {
+                        onSelect(suggestion)
+                    } label: {
+                        Text(previewAmount(suggestion))
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.primary)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.white)
+                                    .shadow(color: .black.opacity(0.06), radius: 3, y: 1)
+                            )
+                    }
+                }
+            }
+            .padding(.horizontal, 4)
+        }
+    }
+    
+    private func previewAmount(_ suggestion: String) -> String {
+        if currentAmount.isEmpty {
+            return suggestion
+        }
+        
+        let zeros = suggestion.filter { $0 == "0" }.count
+        let newAmount = currentAmount + String(repeating: "0", count: zeros)
+        
+        guard let number = Int(newAmount) else { return suggestion }
+        
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.groupingSeparator = "."
+        
+        return (formatter.string(from: NSNumber(value: number)) ?? newAmount) + " VND"
+    }
+    
+    private func formatQuickAmount(_ value: String) -> String {
+        guard let number = Int(value) else { return value }
+        
+        if number >= 1_000_000 {
+            let millions = Double(number) / 1_000_000
+            if millions.truncatingRemainder(dividingBy: 1) == 0 {
+                return "\(Int(millions))M VND"
+            } else {
+                return String(format: "%.1fM VND", millions)
+            }
+        }
+        
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.groupingSeparator = "."
+        
+        return (formatter.string(from: NSNumber(value: number)) ?? value) + " VND"
     }
 }

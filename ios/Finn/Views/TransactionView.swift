@@ -13,11 +13,11 @@ struct TransactionView: View {
     @State private var selectedBudget: String = "Tất cả"
     
     private var userCurrency: String {
-        app.profile?.currency ?? "VNĐ"
+        (app.profile?.currency ?? "VND").uppercased()
     }
     
     private var budgetTags: [String] {
-        ["Tất cả"] + app.budgets.map { $0.name }
+        ["Tất cả"] + app.budgets.reversed().map { $0.name }
     }
     
     private var selectedBudgetId: String? {
@@ -358,7 +358,7 @@ struct TransactionView: View {
                     endPoint: .bottomTrailing
                 )
 
-                Text("\(isPositive ? "+" : "-")\(abs(Int(net)).formattedWithSeparator) VNĐ")
+                Text("\(isPositive ? "+" : "-")\(abs(Int(net)).formattedWithSeparator) VND")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundColor(!isPositive ? .red : .green)
                     .padding(.horizontal, 8)
@@ -391,7 +391,7 @@ struct TransactionView: View {
                                 ? "-\(Int(abs(tx.amount)).formattedWithSeparator) \(userCurrency)"
                                 : "+\(Int(tx.amount).formattedWithSeparator) \(userCurrency)",
                             time: tx.formattedDate,
-                            attachments: tx.image != nil ? 1 : 0,
+                            attachments: (tx.image?.isEmpty == false) ? 1 : 0,
                             category: tx.category != nil ? tx.category : nil,
                             categoryColor: tx.type == "income" ? .green : .red,
                             categoryIcon: tx.type == "income" ? "arrow.down.circle.fill" : "arrow.up.circle.fill"

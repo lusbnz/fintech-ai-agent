@@ -66,7 +66,7 @@ final class BudgetViewModel: ObservableObject {
     func updateBudget(
         id: String,
         name: String,
-        amount: Double,
+//        amount: Double,
         start_date: Date,
         recurring_topup_amount: Double,
         recurring_interval_unit: String,
@@ -85,7 +85,6 @@ final class BudgetViewModel: ObservableObject {
             let _ = try await BudgetService.shared.updateBudget(
                 id: id,
                 name: name,
-                amount: amount,
                 start_date: formatter.string(from: start_date),
                 recurring_topup_amount: recurring_topup_amount,
                 recurring_interval_unit: recurring_interval_unit,
