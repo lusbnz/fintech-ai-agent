@@ -8,6 +8,7 @@ struct HomeView: View {
     @State private var showNotification = false
     @State private var showCreateNew = false
     @State private var selectedType = "Tất cả"
+    @State private var showFullInsight = false
     
     let types = ["Tất cả", "Nạp vào", "Chi ra"]
     
@@ -28,9 +29,66 @@ struct HomeView: View {
     }
     
     private var aiInsightText: String {
-        return """
-        Tuần này bạn chi 1.2 triệu cho cafe, tăng 40% so với tuần trước. Có vẻ họp nhiều nhỉ?
-        """
+        return app.homeInsight?.insight ?? "Không có dữ liệu"
+    }
+    
+    private var aiInsightCard: some View {
+        HStack(alignment: .top, spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [.purple, .pink],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 40, height: 40)
+                
+                Image(systemName: "sparkles")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white)
+            }
+            
+            VStack(alignment: .leading, spacing: 6) {
+                Text("AI Insight")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.purple)
+                
+                Text(aiInsightText)
+                    .font(.system(size: 13))
+                    .foregroundColor(.secondary)
+                    .lineLimit(showFullInsight ? nil : 3)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .animation(.easeInOut, value: showFullInsight)
+                
+                if aiInsightText.count > 120 {
+                    Button {
+                        withAnimation(.easeInOut) {
+                            showFullInsight.toggle()
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text(showFullInsight ? "Thu gọn" : "Xem thêm")
+                                .font(.system(size: 13, weight: .medium))
+                            
+                            Image(systemName: showFullInsight ? "chevron.up" : "chevron.down")
+                                .font(.system(size: 11, weight: .semibold))
+                        }
+                        .foregroundColor(.blue)
+                        .padding(.top, 6)
+                    }
+                }
+            }
+            
+            Spacer()
+        }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white)
+                .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
+        )
     }
 
     
@@ -44,46 +102,8 @@ struct HomeView: View {
                     VStack(spacing: 24) {
                         header
                         summaryBudgetCard
-                    
-                        HStack(spacing: 12) {
-                            ZStack {
-                                Circle()
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [.purple, .pink],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                    .frame(width: 40, height: 40)
-                                
-                                Image(systemName: "sparkles")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.white)
-                            }
-                            .padding(.leading)
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("AI Insight")
-                                    .font(.system(size: 12, weight: .semibold))
-                                    .foregroundColor(.purple)
-                                
-                                Text(aiInsightText)
-                                    .font(.system(size: 13))
-                                    .foregroundColor(.secondary)
-                                    .lineLimit(2)
-                            }
-                            .padding(.vertical)
-                            
-                            Spacer()
-                            
-                        }
-                        .background(
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(Color.white)
-                                .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
-                        )
-                        .padding(.horizontal)
+                        aiInsightCard
+                            .padding(.horizontal)
                         
                         if !app.budgets.isEmpty {
                             BudgetDonutChart(budgets: app.budgets, userCurrency: userCurrency)
@@ -115,7 +135,7 @@ struct HomeView: View {
                 }
                 
                 Spacer()
-                
+//                
 //                NavigationLink {
 //                    BankNotificationsView()
 //                } label: {
@@ -145,7 +165,7 @@ struct HomeView: View {
     
     private var summaryBudgetCard: some View {
         Group {
-            if let budget = app.budgets.first {
+            if let budget = app.budgets.dropLast().last {
                 VStack(alignment: .leading, spacing: 12) {
                     Text(budget.name)
                     .font(.system(size: 16, weight: .semibold))

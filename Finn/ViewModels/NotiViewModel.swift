@@ -9,6 +9,7 @@ final class NotiViewModel: ObservableObject {
     @Published var hasMorePages = true
     @Published var currentPage = 1
     @Published var totalNotifications: Int = 0
+    @Published var totalUnread: Int = 0
     
     @Published var showEdit = false
     @Published var showDeleteConfirm = false
@@ -36,6 +37,7 @@ final class NotiViewModel: ObservableObject {
             hasMorePages = response.pagination.page < response.pagination.total_page
             currentPage = response.pagination.page
             totalNotifications = response.pagination.total ?? 0
+            totalUnread = response.pagination.total_unread ?? 0
 
         } catch {
             if let urlError = error as? URLError, urlError.code == .cancelled {
@@ -52,10 +54,7 @@ final class NotiViewModel: ObservableObject {
         }
     }
     
-    func updateNoti(
-        id: String,
-        is_read: Bool
-    ) async -> Bool {
+    func updateNoti(id: String, is_read: Bool) async -> Bool {
         isLoading = true
         error = nil
         defer { isLoading = false }
@@ -63,11 +62,17 @@ final class NotiViewModel: ObservableObject {
         do {
             let updatedNoti = try await NotiService.shared.updateNoti(
                 id: id,
-                is_read: is_read,
+                is_read: is_read
             )
             
             if let index = noti.firstIndex(where: { $0.id == id }) {
+                let oldIsRead = noti[index].is_read ?? false
+                
                 noti[index] = updatedNoti
+                
+                if !oldIsRead && is_read {
+                    totalUnread = max(0, totalUnread - 1)
+                }
             }
             
             return true

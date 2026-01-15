@@ -10,11 +10,13 @@ struct DashboardData: Codable {
     let summary: DashboardSummary
     let chartData: [ChartDataPoint]
     let budgets: [DashboardBudget]
+    let categories: [DashboardCategory]
     
     enum CodingKeys: String, CodingKey {
         case summary
         case chartData = "chart_data"
         case budgets
+        case categories
     }
 }
 
@@ -75,4 +77,32 @@ struct DashboardBudget: Codable, Identifiable {
         var isOverBudget: Bool {
             return percent > 1
         }
+}
+
+struct DashboardCategory: Codable, Identifiable {
+    let id: String
+    let name: String
+    let income: Double
+    let outcome: Double
+    
+    enum CodingKeys: String, CodingKey {
+        case id = "_id"
+        case name
+        case income
+        case outcome
+    }
+    
+    var total: Double {
+        return outcome - income
+    }
+}
+
+struct InsightResponse: Codable {
+    let status: Int
+    let data: InsightData
+    let message: String
+}
+
+struct InsightData: Codable {
+    let insight: String
 }

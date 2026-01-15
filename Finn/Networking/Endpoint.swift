@@ -30,6 +30,7 @@ enum Endpoint {
     case getPrices(version: String)
     case feedbackCreate(body: [String: Any])
     case getDashboard(body: [String: Any])
+    case getInsight(body: [String: Any])
 
     var url: URL {
         switch self {
@@ -61,8 +62,12 @@ enum Endpoint {
             return URL(string: Endpoint.baseURL + "/recurring-transactions")!
         case .transactionReccurringUpdate(let id, _):
             return URL(string: Endpoint.baseURL + "/recurring-transactions/\(id)")!
-        case .notiList:
-            return URL(string: Endpoint.baseURL + "/notifications/list")!
+        case .notiList(let page):
+            var components = URLComponents(string: Endpoint.baseURL + "/notifications/list")!
+            components.queryItems = [
+                URLQueryItem(name: "page", value: String(page))
+            ]
+            return components.url!
         case .notiUpdate(let id, _):
             return URL(string: Endpoint.baseURL + "/notifications/\(id)")!
         case .chatList:
@@ -87,6 +92,8 @@ enum Endpoint {
             return URL(string: Endpoint.baseURL + "/feedbacks/create")!
         case .getDashboard:
             return URL(string: Endpoint.baseURL + "/dashboards/overview")!
+        case .getInsight:
+            return URL(string: Endpoint.baseURL + "/dashboards/reports/ai")!
         }
     }
 
@@ -141,6 +148,8 @@ enum Endpoint {
         case .feedbackCreate:
             return "POST"
         case .getDashboard:
+            return "POST"
+        case .getInsight:
             return "POST"
         }
     }
@@ -209,8 +218,11 @@ enum Endpoint {
                 request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
                 request.httpBody = try JSONSerialization.data(withJSONObject: body)
                 
-            case .notiList(let page):
-                request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
+            case .notiList:
+                request.setValue(
+                    "Bearer \(TokenManager.shared.accessToken ?? "")",
+                    forHTTPHeaderField: "Authorization"
+                )
             
             case .notiUpdate(_, let body):
                 request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
@@ -268,6 +280,10 @@ enum Endpoint {
                 request.httpBody = try JSONSerialization.data(withJSONObject: body)
             
             case .getDashboard(let body):
+                request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
+                request.httpBody = try JSONSerialization.data(withJSONObject: body)
+            
+            case .getInsight(let body):
                 request.setValue("Bearer \(TokenManager.shared.accessToken ?? "")", forHTTPHeaderField: "Authorization")
                 request.httpBody = try JSONSerialization.data(withJSONObject: body)
         }

@@ -19,4 +19,19 @@ final class DashboardService {
         )
         return response.data
     }
+    
+    func getInsight(
+        period: String,
+    ) async throws -> InsightData {
+        let body: [String: Any] = [
+            "period": period,
+        ]
+        
+        let response: APIResponse<InsightData> = try await APIClient.shared.request(
+            .getInsight(body: body),
+            body: body,
+            as: APIResponse<InsightData>.self
+        )
+        return response.data
+    }
 }

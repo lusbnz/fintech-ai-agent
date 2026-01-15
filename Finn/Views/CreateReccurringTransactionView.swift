@@ -1,17 +1,17 @@
 import SwiftUI
 
-struct CreateTransactionView: View {
+struct CreateReccurringTransactionView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var app: AppState
     @EnvironmentObject var budgetViewModel: BudgetViewModel
     @EnvironmentObject var transactionViewModel: TransactionViewModel
     
-    let transactionToEdit: Transaction?
+    let transactionToEdit: TransactionReccurring?
     let onSuccess: (() -> Void)?
     let defaultBudgetId: String?
     let defaultCategoryId: String?
     
-    init(transaction: Transaction? = nil, defaultBudgetId: String? = nil, defaultCategoryId: String? = nil, onSuccess: (() -> Void)? = nil) {
+    init(transaction: TransactionReccurring? = nil, defaultBudgetId: String? = nil, defaultCategoryId: String? = nil, onSuccess: (() -> Void)? = nil) {
         self.transactionToEdit = transaction
         self.onSuccess = onSuccess
         self.defaultBudgetId = defaultBudgetId
@@ -20,7 +20,7 @@ struct CreateTransactionView: View {
     
     @State private var transactionName: String = ""
     @State private var amount: String = ""
-    @State private var rawAmount: String = ""
+    @State private var rawAmount: String = "" // Số thực không format
     @State private var dateTime: Date = Date()
     @State private var selectedBudgetId: String?
     @State private var selectedTypeDisplay: String = "Chi ra"
@@ -72,7 +72,7 @@ struct CreateTransactionView: View {
                 VStack(spacing: 18) {
                     Spacer()
                     
-                    Text(transactionToEdit != nil ? "Chi tiết giao dịch" : "Tạo giao dịch")
+                    Text("Chi tiết giao dịch")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(Color(hex: "636363"))
                     
@@ -114,10 +114,12 @@ struct CreateTransactionView: View {
                         ) { suggestion in
                             let newAmount: String
                             if suggestion.hasPrefix(".") {
-                                newAmount = rawAmount + suggestion.filter { $0.isNumber }
+                                newAmount = (rawAmount) + suggestion.filter { $0.isNumber }
+                            } else if Int(suggestion) != nil {
+                                newAmount = suggestion
                             } else {
                                 let zeros = suggestion.filter { $0 == "0" }.count
-                                newAmount = rawAmount + String(repeating: "0", count: zeros)
+                                newAmount = (rawAmount) + String(repeating: "0", count: zeros)
                             }
                             rawAmount = newAmount
                             amount = formatNumber(newAmount)
@@ -125,39 +127,14 @@ struct CreateTransactionView: View {
                     }
                     
                     Group {
-                        if transactionToEdit == nil {
-                            infoRow(icon: "dollarsign.circle", title: "Budget") {
-                                if budgetViewModel.isLoading {
-                                    ProgressView()
-                                        .scaleEffect(0.8)
-                                        .padding(.vertical)
-                                } else if app.budgets.isEmpty {
-                                    Text("Không có ngân sách")
-                                        .foregroundColor(.red)
-                                        .font(.caption)
-                                } else {
-                                    Picker("", selection: $selectedBudgetId) {
-                                        Text("Chọn ngân sách").tag(String?.none)
-                                        ForEach(app.budgets) { budget in
-                                            Text(budget.name).tag(budget.id as String?)
-                                        }
-                                    }
-                                    .pickerStyle(.menu)
-                                    .padding(.vertical, 2)
+                        infoRow(icon: "arrow.left.arrow.right", title: "Loại") {
+                            Picker("", selection: $selectedTypeDisplay) {
+                                ForEach(typeOptions, id: \.0) {
+                                    display, _ in Text(display).tag(display)
                                 }
                             }
-                        }
-                        
-                        if transactionToEdit == nil {
-                            infoRow(icon: "arrow.left.arrow.right", title: "Loại") {
-                                Picker("", selection: $selectedTypeDisplay) {
-                                    ForEach(typeOptions, id: \.0) {
-                                        display, _ in Text(display).tag(display)
-                                    }
-                                }
-                                .pickerStyle(.menu)
-                                .padding(.vertical, 2)
-                            }
+                            .pickerStyle(.menu)
+                            .padding(.vertical, 2)
                         }
                         
                         infoRow(icon: "calendar", title: "Thời gian") {
@@ -173,34 +150,33 @@ struct CreateTransactionView: View {
                                     .font(.caption)
                             } else {
                                 Picker("", selection: $selectedCategoryId) {
-                                    Text("Chọn danh mục").tag(String?.none)
+                                    Text("Chọn danh mục").tag(nil as String?)
+
                                     ForEach(app.categories) { category in
-                                        Text(category.name).tag(Optional(category.id))
+                                        Text(category.name).tag(category.id)
                                     }
                                 }
                                 .pickerStyle(.menu)
                                 .padding(.vertical, 2)
                             }
                         }
-                        
-                        if transactionToEdit == nil {
-                            Toggle(isOn: $isRecurring) {
-                                HStack {
-                                    Image(systemName: "repeat")
-                                        .foregroundColor(Color(hex: "636363"))
-                                    Text("Giao dịch định kỳ")
-                                        .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(Color(hex: "636363"))
-                                }
+                      
+                        Toggle(isOn: $isRecurring) {
+                            HStack {
+                                Image(systemName: "repeat")
+                                    .foregroundColor(Color(hex: "636363"))
+                                Text("Giao dịch định kỳ")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(Color(hex: "636363"))
                             }
-                            .toggleStyle(SwitchToggleStyle(tint: .black))
-                            .padding()
-                            .background(Color.white.opacity(0.8))
-                            .cornerRadius(16)
-                            .animation(.easeInOut, value: isRecurring)
                         }
+                        .toggleStyle(SwitchToggleStyle(tint: .black))
+                        .padding()
+                        .background(Color.white.opacity(0.8))
+                        .cornerRadius(16)
+                        .animation(.easeInOut, value: isRecurring)
 
-                        if isRecurring && transactionToEdit == nil {
+                        if isRecurring {
                             infoRow(icon: "calendar", title: "Ngày bắt đầu định kỳ") {
                                 DatePicker("", selection: $recurringStartDate, displayedComponents: [.date])
                                     .labelsHidden()
@@ -312,7 +288,7 @@ struct CreateTransactionView: View {
                 }) {
                     ZStack(alignment: .leading) {
                         Text(
-                            transactionViewModel.isLoading ? "Đang lưu..." : (transactionToEdit != nil ? "Cập nhật" : "Tạo mới")
+                            transactionViewModel.isLoading ? "Đang lưu..." : "Cập nhật"
                         )
                             .font(.system(size: 14))
                             .fontWeight(.medium)
@@ -360,8 +336,7 @@ struct CreateTransactionView: View {
         .task {
             if let prefill = defaultBudgetId {
                 selectedBudgetId = prefill
-            }
-            else if let firstBudget = app.budgets.first {
+            } else if let firstBudget = app.budgets.first {
                 selectedBudgetId = firstBudget.id
             }
             if let prefill = defaultCategoryId {
@@ -376,7 +351,7 @@ struct CreateTransactionView: View {
             Button("Xoá", role: .destructive) {
                 if let transaction = transactionToEdit {
                     Task {
-                        let success = await transactionViewModel.deleteTransaction(transaction)
+                        let success = await transactionViewModel.deleteReccurringTransaction(transaction)
                         if success { dismiss() }
                     }
                 }
@@ -421,7 +396,7 @@ struct CreateTransactionView: View {
             }
         }
     }
-
+    
     private var isFormValid: Bool {
         !transactionName.isEmpty &&
         !rawAmount.isEmpty &&
@@ -429,7 +404,7 @@ struct CreateTransactionView: View {
         selectedBudgetId != nil
     }
     
-    private func fillData(from transaction: Transaction) {
+    private func fillData(from transaction: TransactionReccurring) {
         transactionName = transaction.name ?? ""
         
         let amountInt = Int(transaction.amount)
@@ -437,22 +412,21 @@ struct CreateTransactionView: View {
         amount = formatNumber("\(amountInt)")
         
         let dateFormatter = ISO8601DateFormatter()
-        if let parsedDate = dateFormatter.date(from: transaction.date_time) {
-            dateTime = parsedDate
-        } else {
-            dateTime = Date()
-        }
-        
-        isRecurring = transaction.is_recurring ?? false
-        
+        dateFormatter.formatOptions = [
+            .withInternetDateTime,
+            .withFractionalSeconds
+        ]
+
         if let startDateStr = transaction.recurring_start_date,
-           let parsedStart = dateFormatter.date(from: startDateStr) {
-            recurringStartDate = parsedStart
+           let parsedDate = dateFormatter.date(from: startDateStr) {
+            recurringStartDate = parsedDate
         } else {
             recurringStartDate = Date()
         }
         
-        if let unit = transaction.recurring_interval_unit {
+        isRecurring = transaction.active ?? false
+        
+        if let unit = transaction.interval_unit {
             recurringIntervalUnit = unit
         } else {
             recurringIntervalUnit = "month"
@@ -492,46 +466,24 @@ struct CreateTransactionView: View {
                     print("Uploaded image URL: \(imageUrl ?? "")")
                 }
                 
-                let success: Bool
-                
                 let noteValue = description.isEmpty ? transactionName : description
                 let categoryIdToSend = selectedCategoryId
-                let recurringStartIso = isRecurring ? dateFormatter.string(from: recurringStartDate) : nil
                 
                 if let transaction = transactionToEdit {
-                    _ = try await TransactionService.shared.updateTransaction(
+                    _ = try await TransactionService.shared.updateReccurringTransaction(
                         id: transaction.id,
                         name: transactionName,
                         amount: amountDouble,
                         category_id: categoryIdToSend,
                         note: noteValue,
                         date: isoDate,
-                        image: imageUrl,
-                        is_recurring: isRecurring ? true : nil,
-                        recurring_start_date: recurringStartIso,
-                        recurring_interval_unit: isRecurring ? recurringIntervalUnit : nil,
-                        recurring_interval_value: isRecurring ? 1 : nil
-                    )
-                    success = true
-                } else {
-                    _ = try await TransactionService.shared.createTransaction(
-                        name: transactionName,
-                        amount: amountDouble,
-                        category_id: categoryIdToSend,
-                        note: noteValue,
-                        date: isoDate,
                         type: typeValue,
-                        budget_id: budgetId,
                         image: imageUrl,
-                        is_recurring: isRecurring ? true : nil,
-                        recurring_start_date: recurringStartIso,
-                        recurring_interval_unit: isRecurring ? recurringIntervalUnit : nil,
-                        recurring_interval_value: isRecurring ? 1 : nil
+                        active: isRecurring ? true : nil,
+                        interval_unit: recurringIntervalUnit,
+                        interval_value: 1
                     )
-                    success = true
-                }
-                
-                if success {
+                    
                     onSuccess?()
                     dismiss()
                 }
@@ -561,115 +513,5 @@ struct CreateTransactionView: View {
         .padding(.horizontal)
         .background(Color.white.opacity(0.8))
         .cornerRadius(16)
-    }
-}
-
-// MARK: - Amount Suggestions View
-struct AmountSuggestionsView: View {
-    let currentAmount: String
-    let suggestions: [String]
-    let onSelect: (String) -> Void
-    
-    var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(suggestions, id: \.self) { suggestion in
-                    Button {
-                        onSelect(suggestion)
-                    } label: {
-                        Text(previewAmount(suggestion))
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.primary)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 10)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.white)
-                                    .shadow(color: .black.opacity(0.06), radius: 3, y: 1)
-                            )
-                    }
-                }
-            }
-            .padding(.horizontal, 4)
-        }
-    }
-    
-    private func previewAmount(_ suggestion: String) -> String {
-        if currentAmount.isEmpty {
-            return suggestion
-        }
-        
-        let zeros = suggestion.filter { $0 == "0" }.count
-        let newAmount = currentAmount + String(repeating: "0", count: zeros)
-        
-        guard let number = Int(newAmount) else { return suggestion }
-        
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.groupingSeparator = "."
-        
-        return (formatter.string(from: NSNumber(value: number)) ?? newAmount)
-    }
-    
-    private func formatQuickAmount(_ value: String) -> String {
-        guard let number = Int(value) else { return value }
-        
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.groupingSeparator = "."
-        
-        return (formatter.string(from: NSNumber(value: number)) ?? value)
-    }
-}
-
-struct CustomButton: View {
-    let title: String
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(Color(hex: "636363"))
-                .padding(.vertical, 4)
-                .padding(.horizontal, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color(hex: "D9D9D9"))
-                )
-        }
-    }
-}
-
-struct ImagePicker: UIViewControllerRepresentable {
-    @Binding var image: UIImage?
-    
-    func makeUIViewController(context: Context) -> UIImagePickerController {
-        let picker = UIImagePickerController()
-        picker.delegate = context.coordinator
-        picker.allowsEditing = false
-        return picker
-    }
-    
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
-    
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-    
-    class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
-        let parent: ImagePicker
-        
-        init(_ parent: ImagePicker) {
-            self.parent = parent
-        }
-        
-        func imagePickerController(
-            _ picker: UIImagePickerController,
-            didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]
-        ) {
-            parent.image = info[.originalImage] as? UIImage
-            picker.dismiss(animated: true)
-        }
     }
 }

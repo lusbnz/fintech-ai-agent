@@ -16,10 +16,6 @@ struct NotificationView: View {
         selectedTab == 1 ? notifications.filter { !($0.is_read ?? false) } : notifications
     }
     
-    private var unreadCount: Int {
-        notifications.filter { !($0.is_read ?? false) }.count
-    }
-    
     var body: some View {
         VStack(spacing: 0) {
             headerView
@@ -44,7 +40,6 @@ struct NotificationView: View {
     
     private var headerView: some View {
         VStack(spacing: 16) {
-            // Navigation Bar
             HStack {
                 Button {
                     dismiss()
@@ -83,9 +78,9 @@ struct NotificationView: View {
                 
                 TabButton(
                     title: "Chưa đọc",
-                    count: unreadCount,
+                    count: viewModel.totalUnread,
                     isSelected: selectedTab == 1,
-                    showBadge: unreadCount > 0
+                    showBadge: viewModel.totalUnread > 0
                 ) {
                     withAnimation(.spring(response: 0.3)) {
                         selectedTab = 1
@@ -157,6 +152,8 @@ struct NotificationView: View {
             .padding(.bottom, 100)
         }
         .refreshable {
+            viewModel.currentPage = 1
+            viewModel.hasMorePages = true
             await viewModel.loadNoti(page: 1, append: false)
         }
     }
@@ -314,8 +311,9 @@ struct NotificationCard: View {
                             .lineLimit(2)
                     }
                     HStack(spacing: 8) {
-                        Text(noti.createdAt, style: .relative)
+                        Text(relativeTimeString(from: noti.createdAt))
                             .font(.system(size: 12))
+                            .foregroundColor(.secondary)
                         
                         if let amount = noti.metaDouble("amount") {
                             let type = noti.metaString("type")
@@ -339,6 +337,34 @@ struct NotificationCard: View {
             .shadow(color: .black.opacity(0.04), radius: 4, y: 2)
         }
         .buttonStyle(PlainButtonStyle())
+    }
+    
+    private func relativeTimeString(from date: Date) -> String {
+        let now = Date()
+        let calendar = Calendar.current
+        
+        let minutes = calendar.dateComponents([.minute], from: date, to: now).minute ?? 0
+        
+        if minutes < 1 {
+            return "Vừa xong"
+        } else if minutes < 60 {
+            return "\(minutes) phút trước"
+        }
+        
+        let hours = calendar.dateComponents([.hour], from: date, to: now).hour ?? 0
+        if hours < 24 {
+            return "\(hours) giờ trước"
+        }
+        
+        let days = calendar.dateComponents([.day], from: date, to: now).day ?? 0
+        if days < 7 {
+            return "\(days) ngày trước"
+        }
+        
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "vi_VN")
+        formatter.dateFormat = "dd/MM/yyyy"
+        return formatter.string(from: date)
     }
     
     private func formatAmount(_ value: Double) -> String {

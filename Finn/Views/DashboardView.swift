@@ -7,6 +7,7 @@ struct DashboardView: View {
     @State private var selectedTab = 0
     @State private var selectedPeriod = 0
     @State private var showAllCategories = false
+    @State private var showFullInsight = false
     
     private let periods = ["Tuần", "Tháng"]
     
@@ -23,18 +24,7 @@ struct DashboardView: View {
     }
     
     private var aiInsightText: String {
-        guard let data = dashboardViewModel.dashboardData else {
-            return "Đang tải dữ liệu..."
-        }
-        
-        let expenseBudgets = data.budgets.filter { $0.amount < 0 }
-        guard let topCategory = expenseBudgets.max(by: { abs($0.amount) < abs($1.amount) }) else {
-            return "Chưa có dữ liệu chi tiêu."
-        }
-        
-        let percentOfTotal = (abs(topCategory.amount) / data.summary.totalExpenses * 100).rounded()
-        
-        return "Chi tiêu \(topCategory.name) chiếm \(Int(percentOfTotal))% tổng chi. Cân nhắc giảm để cải thiện dòng tiền."
+        return dashboardViewModel.insightData?.insight ?? "Không có dữ liệu"
     }
 
     var body: some View {
@@ -63,6 +53,7 @@ struct DashboardView: View {
             .task {
                 let initialPeriod = selectedPeriod == 0 ? "week" : "month"
                 await dashboardViewModel.loadData(for: initialPeriod)
+                await dashboardViewModel.loadInsight(for: initialPeriod)
             }
 
             if dashboardViewModel.isLoading {
@@ -113,6 +104,7 @@ struct DashboardView: View {
                         Task {
                             let apiPeriod = periods[index] == "Tuần" ? "week" : "month"
                             await dashboardViewModel.loadData(for: apiPeriod)
+                            await dashboardViewModel.loadInsight(for: apiPeriod)
                         }
                     } label: {
                         Text(periods[index])
@@ -210,7 +202,7 @@ struct DashboardView: View {
     @ViewBuilder
     private var quickStatsRow: some View {
         if let summary = dashboardViewModel.dashboardData?.summary {
-            HStack(spacing: 12) {
+            HStack(spacing: 6) {
                 QuickStatCard(
                     icon: "arrow.left.arrow.right",
                     title: "Giao dịch",
@@ -247,7 +239,7 @@ struct DashboardView: View {
     }
     
     private var aiInsightCard: some View {
-        HStack(spacing: 12) {
+        HStack(alignment: .top, spacing: 12) {
             ZStack {
                 Circle()
                     .fill(
@@ -258,25 +250,55 @@ struct DashboardView: View {
                         )
                     )
                     .frame(width: 40, height: 40)
-                
+
                 Image(systemName: "sparkles")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white)
             }
-            
-            VStack(alignment: .leading, spacing: 4) {
+
+            VStack(alignment: .leading, spacing: 6) {
                 Text("AI Insight")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(.purple)
-                
-                Text(aiInsightText)
-                    .font(.system(size: 13))
-                    .foregroundColor(.secondary)
-                    .lineLimit(2)
+
+                if dashboardViewModel.isLoadingInsight {
+                    HStack(spacing: 8) {
+                        ProgressView()
+                            .scaleEffect(0.8)
+
+                        Text("AI đang phân tích dữ liệu…")
+                            .font(.system(size: 13))
+                            .foregroundColor(.secondary)
+                    }
+                } else {
+                    Text(aiInsightText)
+                        .font(.system(size: 13))
+                        .foregroundColor(.secondary)
+                        .lineLimit(showFullInsight ? nil : 3)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .animation(.easeInOut, value: showFullInsight)
+
+                    if aiInsightText.count > 120 {
+                        Button {
+                            withAnimation(.easeInOut) {
+                                showFullInsight.toggle()
+                            }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Text(showFullInsight ? "Thu gọn" : "Xem thêm")
+                                    .font(.system(size: 13, weight: .medium))
+
+                                Image(systemName: showFullInsight ? "chevron.up" : "chevron.down")
+                                    .font(.system(size: 11, weight: .semibold))
+                            }
+                            .foregroundColor(.blue)
+                            .padding(.top, 6)
+                        }
+                    }
+                }
             }
-            
+
             Spacer()
-            
         }
         .padding(14)
         .background(
@@ -285,7 +307,7 @@ struct DashboardView: View {
                 .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
         )
     }
-    
+
     private var chartSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -350,17 +372,25 @@ struct DashboardView: View {
     }
     
     private var categoryList: some View {
-        VStack(spacing: 0) {
-            ForEach(sampleCategories().prefix(showAllCategories ? 10 : 4)) { item in
-                CategoryRowNew(item: item, total: totalChi)
-                
-                if item.id != sampleCategories().last?.id {
+        let categories = dashboardViewModel.dashboardData?.categories ?? []
+        let displayCategories = showAllCategories
+            ? categories
+            : Array(categories.prefix(4))
+
+        return VStack(spacing: 0) {
+            ForEach(displayCategories) { item in
+                CategoryRowNew(
+                    item: item,
+                    totalExpense: totalChi
+                )
+
+                if item.id != displayCategories.last?.id {
                     Divider()
                         .padding(.leading, 52)
                 }
             }
-            
-            if sampleCategories().count > 4 {
+
+            if categories.count > 4 {
                 Button {
                     withAnimation {
                         showAllCategories.toggle()
@@ -378,6 +408,7 @@ struct DashboardView: View {
             }
         }
     }
+
     
     private var budgetList: some View {
         Group {
@@ -507,24 +538,24 @@ struct LegendItem: View {
 }
 
 struct CategoryRowNew: View {
-    let item: FakeCategoryItem
-    let total: Double
-    
+    let item: DashboardCategory
+    let totalExpense: Double
+
     private var percent: Double {
-        guard total > 0 else { return 0 }
-        return item.amount / total
+        guard totalExpense > 0 else { return 0 }
+        return item.outcome / totalExpense
     }
-    
+
     var body: some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     Text(item.name)
                         .font(.system(size: 14, weight: .medium))
-                    
+
                     Spacer()
-                    
-                    Text(formatCurrency(item.amount))
+
+                    Text(formatCurrency(item.outcome))
                         .font(.system(size: 14, weight: .semibold))
                 }
             }
@@ -532,6 +563,7 @@ struct CategoryRowNew: View {
         .padding(.vertical, 10)
     }
 }
+
 
 struct BudgetRowNew: View {
     let item: DashboardBudget

@@ -62,7 +62,6 @@ struct ChatView: View {
     @StateObject private var speechRecognizer = SpeechRecognizer()
     @Namespace private var transitionNamespace
     
-    // MARK: - Image Selection States
     @State private var selectedPhotoItem: PhotosPickerItem? = nil
     @State private var selectedImage: UIImage? = nil
     
@@ -224,7 +223,6 @@ struct ChatView: View {
                     
                     // Input Bar
                     HStack(spacing: 8) {
-                        // Voice Button
                         VoiceInputButton(
                             isRecording: speechRecognizer.isRecording,
                             isAuthorized: speechRecognizer.isAuthorized
@@ -232,7 +230,6 @@ struct ChatView: View {
                             speechRecognizer.toggleRecording()
                         }
                         
-                        // Photo Picker Button
                         PhotosPicker(
                             selection: $selectedPhotoItem,
                             matching: .images,
@@ -325,8 +322,6 @@ struct ChatView: View {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
-
-// MARK: - Supporting Views (unchanged)
 
 struct VoiceInputButton: View {
     let isRecording: Bool

@@ -14,6 +14,7 @@ final class AppState: ObservableObject {
     @Published var categories: [Category] = []
     @Published var noti: [Noti] = []
     @Published var chats: [Chat] = []
+    @Published var homeInsight: InsightData? = nil
     
     let settings = AppSettings.shared
 
@@ -34,6 +35,7 @@ final class AppState: ObservableObject {
             async let reccurringTransactionResponse = TransactionService.shared.getReccurringTransactions(page: 1)
             async let categoryResponse = CategoryService.shared.getCategories(page: 1)
             async let chatResponse = ChatService.shared.getChats(page: 1)
+            async let homeInsightResponse = DashboardService.shared.getInsight(period: "3_days")
 
             let userResult = try await userResponse
             let budgetResult = try await budgetResponse
@@ -41,6 +43,7 @@ final class AppState: ObservableObject {
             let reccurringTransactionResult = try await reccurringTransactionResponse
             let categoryResult = try await categoryResponse
             let chatResult = try await chatResponse
+            let homeInsightResult = try await homeInsightResponse
 
             self.profile = userResult.self
             self.budgets = budgetResult.data.data
@@ -48,6 +51,7 @@ final class AppState: ObservableObject {
             self.reccurringTransactions = reccurringTransactionResult.data
             self.categories = categoryResult.data
             self.chats = chatResult.data
+            self.homeInsight = homeInsightResult
             
             if budgetResult.data.data.count == 0 {
                 settings.isSettedFirstBudeget = false
