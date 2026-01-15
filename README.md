@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/iOS-16+-000000?style=flat&logo=apple&logoColor=white" alt="iOS"/>
+  <img src="https://img.shields.io/badge/iOS-26+-000000?style=flat&logo=apple&logoColor=white" alt="iOS"/>
   <img src="https://img.shields.io/badge/Android-6.0+-3DDC84?style=flat&logo=android&logoColor=white" alt="Android"/>
   <img src="https://img.shields.io/badge/SwiftUI-5.9+-pink?style=flat&logo=swift&logoColor=white" alt="SwiftUI"/>
   <img src="https://img.shields.io/badge/Jetpack%20Compose-1.5+-4285F4?style=flat&logo=jetpackcompose&logoColor=white" alt="Jetpack Compose"/>
