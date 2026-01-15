@@ -1,10 +1,6 @@
 # Finn – Smart Personal Finance Manager with AI Integration
 
 <p align="center">
-  <img src="https://via.placeholder.com/1200x400/4A90E2/FFFFFF?text=Finn+-+Smart+Personal+Finance+with+AI" alt="Finn Banner" width="100%"/>
-</p>
-
-<p align="center">
   <strong>A mobile personal finance app with AI-powered assistant</strong><br>
   Graduation Thesis – Posts and Telecommunications Institute of Technology<br>
   Class of 2021–2025
